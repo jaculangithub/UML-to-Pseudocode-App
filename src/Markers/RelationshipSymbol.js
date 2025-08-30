@@ -53,6 +53,7 @@ export function ArrowMarker({
   edgeType, 
   relationshipType,
   symbol,
+  diagramType,
   }) {  
 
   function getAngle(){
@@ -105,7 +106,7 @@ export function ArrowMarker({
 
         <path
           d = {isOpenArrow()? 'M 7 0 L 0 4 L 7 8' : 'M 7 0 L 0 4 L 7 8 Z'} // Adjust path for generalization
-          fill= {isOpenArrow()? 'none' : 'white'}
+          fill= {isOpenArrow()? 'none' : diagramType === "sequence"? `black`: 'white'}
           stroke="#1A192B"
           strokeWidth="1"
         />

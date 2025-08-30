@@ -1,7 +1,12 @@
-import { memo } from 'react';
+import { memo, useEffect } from 'react';
 import { NodeResizer }  from '@xyflow/react';
 
-const ObjectNode = ({ selected }) => {
+const ObjectNode = ({ id, selected, data }) => {
+  
+  useEffect(() => {
+    data.actorName = `Object ${id}`
+  })
+  
   return (
     <div
      

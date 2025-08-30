@@ -47,135 +47,18 @@ class LinkedList {
   }
 }
 
-// // Example usage:
-// const list = new LinkedList();
-// list.append(10);
-// list.append(20);
-// list.append(30);
-// list.prepend(5);
-
-// list.printList(); // 5 -> 10 -> 20 -> 30 -> null
-
-
-export function ActivityDiagram1({ nodes }) {
-  if (!nodes || nodes.length === 0) {
-    return "// Empty diagram - no nodes found";
-  }
-
-  let visited = new Set();
-  let pseudocode = "";
-  let indentLevel = 0;
-  let hasEndNode = false;
-
-  function addLine(text) {
-    if (pseudocode.length > 0) {
-      pseudocode += "\n";
-    }
-    pseudocode += "  ".repeat(indentLevel) + text;
-  }
-
-  function dfs(node, targetIndex) {
-    if (!node || visited.has(node.id)) return;
-    visited.add(node.id);
-
-    switch (node.type) {
-      case "StartNode":
-        addLine("BEGIN");
-        indentLevel++;
-        break;
-
-      case "ActionNode":
-        addLine(`DO: ${node.data?.label || node.id}`);
-        break;
-
-      case "DecisionNode":
-        // console.log(node.targets.startLabel)
-        addLine(`\n//Conditions:`)
-        console.log("Node", node, "Targets:", node.targets)
-        addLine(`IF [${node.targets[targetIndex]?.startLabel || "condition"}] THEN`);
-        indentLevel++;
-        
-        if (node.targets?.[0]) {
-          const trueNode = nodes.find(n => n.id === node.targets[0].nodeId);
-          dfs(trueNode);
-        }
-
-        indentLevel--;
-
-        for (let i = 1; i < node.targets.length; i++) {
-          const branchLabel = node.targets[i].edgeLabel || 
-                           (i === node.targets.length - 1 ? "ELSE" : `ELSE IF [condition_${i}]`);
-          addLine(branchLabel);
-          indentLevel++;
-          const branchNode = nodes.find(n => n.id === node.targets[i].nodeId);
-          dfs(branchNode, i);
-          indentLevel--;
-        }
-        break;
-
-      case "MergeNode":
-        break;
-
-      case "EndNode":
-        hasEndNode = true;
-        // if (indentLevel > 0) indentLevel--;
-        break;
-      
-      case "DestructionNode":
-        addLine('Terminate Progress')
-
-      default:
-        addLine(`[UNHANDLED NODE TYPE: ${node.type}]: ${node.id}`);
-    }
-
-    if (node.targets) {
-      for (const target of node.targets) {
-        const targetNode = nodes.find(n => n.id === target.nodeId);
-        dfs(targetNode);
-      }
-    }
-  }
-
-  const startNode = nodes.find(node => node.type === "StartNode");
-  if (startNode) {
-    dfs(startNode, 0);
-    
-    if (hasEndNode) {
-      if (indentLevel > 0) indentLevel--;
-      addLine("END");
-    }
-  } else {
-    pseudocode = "// No StartNode found in the diagram!";
-  }
-
-  return (
-    <pre style={{
-      margin: 0,
-      fontFamily: 'monospace',
-      whiteSpace: 'pre-wrap',
-      wordWrap: 'break-word'
-    }}>
-      {pseudocode}
-    </pre>
-  );
-}
-
 export function ActivityDiagram( {nodes} ){
-
+  // console.time(`RunActivityDiagram`); // REMOVED
+  const startTime = performance.now(); // ADDED
   let visited = new Set();
   let pseudocode = "";
   let indentLevel = 0;
   let hasEndNode = false;
-
   
-    // nodes.forEach(node => {
-    //   node.numberOfVisitedSource = 0;
-    // });
-
   if(!nodes || nodes.length === 0){
     return "" //empty diagram
   }
-  console.log("satrt")
+  
 
   // adding new line
   function addLine(text) {
@@ -185,11 +68,18 @@ export function ActivityDiagram( {nodes} ){
     pseudocode += "  ".repeat(indentLevel) + text;
   }
 
-  function dfs(node, prevNode){
-    if(!node || visited.has(node.id)) return;
+  function dfs(node){
     console.log("Current Node: ", node.id, "Node type: ", node.type)
+    if(!node || visited.has(node.id)){
+      if(node.type === "ActionNode"){
+        addLine(`DO: ${node.data?.label}`)
+      }
+      console.log("Node: ", node.id)
+      return;
+    } 
     
-    if(node.type !== "MergeNode"){
+    
+    if(node.type !== "MergeNode" && node.type !== "JoinNode"){
       visited.add(node.id);
     }
 
@@ -205,15 +95,14 @@ export function ActivityDiagram( {nodes} ){
         break;
       
       case "DecisionNode":
-        addLine(`\n//Conditions:`)
-        
-        for(const target of node.targets) {
+        addLine(`//Conditions:`)
+        node.targets.forEach((target) => {
           addLine(`IF(${target.startLabel})`)
           indentLevel++;
           const targetNode = nodes.find(n => n.id === target.nodeId);
-          dfs(targetNode, node);
+          dfs(targetNode);
           indentLevel--;
-        }
+        });
         break;
 
       case "DestructionNode":
@@ -221,21 +110,7 @@ export function ActivityDiagram( {nodes} ){
         break;
       
       case "MergeNode":
-        // node.numberOfVisitedSource++
-        // console.log("Number of visited sources ", node.numberOfVisitedSource, 
-        //             " number of sources:", node.sources.length)
-
-        // if(node.numberOfVisitedSource === node.sources.length){
-        //   visited.add(node.id);
-        //   console.log("Current n of source: ", node.numberOfVisitedSource)
-        //   console.log("Merge Node addedd to set")
-        //   indentLevel--;
-        //   break;
-        // }else {
-
-        //   console.log("Merge Node not added to set")
-        //   return;
-        // }
+        break;
       
       case "EndNode":
         hasEndNode =  true;
@@ -244,15 +119,47 @@ export function ActivityDiagram( {nodes} ){
       case "DestructionNode":
         addLine('Program Terminated/Cancelled!');
         break;
+      
+      case "ForkNode":
+        addLine("//Parallel Execution Start")
+        break;
+      
+      case "JoinNode":
+        let allSourceVisited = true;
+        for(const source of node.sources){
+          // console.log("For Loop==================================")
+          // console.log(`Source: ${source.nodeId}`)
+          // console.log("IsVisited? ", visited.has(source.nodeId))
+
+          if(!visited.has(source.nodeId)){
+            allSourceVisited = false; 
+            // console.log("Unvisited Node: ", source.nodeId)
+            break;
+          }
+        }
+        
+        if(allSourceVisited){
+          // console.log(`All node that go to ${node.id} is visited`)
+          addLine("//PARALLEL Execution End")
+          visited.add(node.id)
+          break; //assuming all of its source node/s is visited, go to the next nodes after the join node
+        }else{
+          // console.log("returning..")
+          return; //backtrack, dont continue going deep
+        }
+
       default: 
         addLine("Undefined node type");
         break;
+
     }
 
     if(node.targets && node.type !== "DecisionNode"){
       for(const target of node.targets) {
         const targetNode = nodes.find(n => n.id === target.nodeId);
-        dfs(targetNode, node);
+        // console.log("Target: ", targetNode.id)
+        dfs(targetNode);
+        // console.log("back to ", targetNode.id, "Type ", targetNode.type, " ", targetNode.data?.label)
       }
     }
 
@@ -262,19 +169,22 @@ export function ActivityDiagram( {nodes} ){
   const startNode = nodes.find(node => node.type === "StartNode");
 
   if(startNode){
-    dfs(startNode, null);
+    dfs(startNode);
 
     if(hasEndNode){
       indentLevel = 0;
       addLine("END");
     }
+    console.log("asdadadlst")
+
   } else {
     pseudocode = "//No StartNode found"
   }
 
-  console.log("hello")
-
-  
+  // console.timeEnd(`RunActivityDiagram`); // REMOVED
+  const endTime = performance.now(); // ADDED
+  const executionTime = (endTime - startTime).toFixed(5); // ADDED
+  console.log(`Algorithm executed in ${executionTime} milliseconds`); // ADDED
 
   return (
     <pre style={{
@@ -287,35 +197,113 @@ export function ActivityDiagram( {nodes} ){
     </pre>
   );
 
-
 }
 
 export function SequenceDiagram({nodes, edges}) {
 
-  function getActor(nodeId){
-    let node = nodes.find(n => n.id === nodeId)
-    return node.parentId;
-  }
-
+  // console.log("GEn. ", edges)
+  const startTime = performance.now(); // ADDED
   let pseudocode = "";
   let inLoop = false;
+  let indentLevel = 0;
+
+  
+
+  function addLine(text) {
+    if (pseudocode.length > 0) {
+      pseudocode += "\n";
+    }
+    pseudocode += text;
+  }
+
+  function message(edgeData) {
+    let messageType = ""
+
+    if(edgeData.endSymbol === "closed arrow"){
+      if(edgeData.middleLabel.includes("<<create>>")){  
+        addLine(`${edgeData.source} cresaates ${edgeData.target}`)
+        messageType = "create message"; // create message
+      }
+      else if(edgeData.targetNodeType === "ShadedCircle"){
+        addLine(`${edgeData.source} ${edgeData.middleLabel} to External Entity`)
+        messageType = "lost message" //Lost message 
+      }else if(edgeData.sourceNodeType === "ShadedCircle"){
+        addLine(`External Entity ${edgeData.middleLabel} ${edgeData.target}`)
+        messageType = "found message" //found message
+      }else if(edgeData.targetNodeType === "DestroyMessage"){
+        addLine(`${edgeData.source} Destroys ${edgeData.target}`)
+        messageType = "destroy message"; //destroy message
+      }else if(edgeData.lineStyle === "line"){
+        addLine(`${edgeData.source} ${edgeData.middleLabel} ${edgeData.target}`)
+        messageType = "synchronous"; //synchronous message
+      } else {
+        addLine("Unknown message type")
+      }
+    }else if (edgeData.endSymbol === "open arrow"){
+      if(edgeData.source === edgeData.target){
+        addLine(`${edgeData.source} will ${edgeData.middleLabel}`)
+        messageType = "self message" //self message 
+      }else if(edgeData.lineStyle === "line"){
+        addLine(`${edgeData.source} ${edgeData.middleLabel} ${edgeData.target} //asynchronous`)
+        messageType = "asynchronous" //asynch message
+      }else if(edgeData.lineStyle === "dashLine"){
+        addLine(`${edgeData.source} Replies: ${edgeData.middleLabel} to ${edgeData.target}`)
+        messageType = "reply" //reply message 
+      }else {
+        addLine("Unknown message type")
+      }
+    } else {
+      addLine("Unknown message type")
+    }
+
+
+    // if(edgeData.endSymbol === "closed arrow" && edgeData.lineStyle === "line"){ //message is synchronous
+    //   addLine(`${edgeData.source} ${edgeData.middleLabel} ${edgeData.target}`)
+    // }
+    // else if (edgeData.endSymbol === "open arrow" && edgeData.lineStyle === "line"){ //asynch message
+    //   addLine(`${edgeData.source} ${edgeData.middleLabel} ${edgeData.target} //asynchronous`)
+    // }
+    // else if (edgeData.endSymbol === "open arrow" && edgeData.lineStyle === "dashLine"){ //reply message
+    //   addLine(`${edgeData.source} Replies: ${edgeData.middleLabel} to ${edgeData.target}`) 
+    // }
+    // else if (edgeData.source === edgeData.target) { //self message
+    //   addLine(`${edgeData.source} will ${edgeData.middleLabel}`)
+    // }
+    // else if (edgeData.middleLabel.includes("<<create>>") && edgeData.endSymbol === "closed arrow"){ //create message
+    //   addLine(`${edgeData.source} create ${edgeData.target}`)
+    // }
+    // else if(edgeData.endSymbol === "closed arrow" && edgeData.targetNodeType === "DestroyMessage"){ //delete message
+    //   addLine(`${edgeData.source} Destroys ${edgeData.target}`)
+    // }
+    // else if(edgeData.endSymbol === "closed arrow" && edgeData.sourceNodeType === "ShadedCircle"){ //found message
+    //   addLine(`External Entity ${edgeData.middleLabel} ${edgeData.target}`)
+    // }
+    // else if(edgeData.endSymbol === "closed arrow" && edgeData.targetNodeType === "ShadedCircle"){ //lost message
+    //   addLine(`${edgeData.source} ${edgeData.middleLabel} to External Entity`)
+    // }
+   
+  }
 
   edges.map(edge => {
     // console.log(edge.loopNodeId)
     if(edge.data.loopNodeId && !inLoop){
-      console.log(true)
+      // console.log(true)
       inLoop = true
       pseudocode += "  Loop (condition) \n"
+      indentLevel++;
     }else{
-       console.log(false)
+      // console.log(false)
       inLoop = false;
+      indentLevel--;
     }
+    
+    message(edge.data);
 
-    let replyMessage = edge.data.lineStyle === "line" ? false : true
-
-    pseudocode += `${inLoop? `  `: ''} ${getActor(edge.source)} ${replyMessage? "Reply: " : ""} ${edge.data.middleLabel} ${getActor(edge.target)} \n`;
- 
   });
+
+  const endTime = performance.now(); // ADDED
+  const executionTime = (endTime - startTime).toFixed(5); // ADDED
+  console.log(`Algorithm executed in ${executionTime} milliseconds`); // ADDED
 
   return (
     <div className="sequence-pseudocode">
@@ -326,6 +314,9 @@ export function SequenceDiagram({nodes, edges}) {
   );
 }
 
+// export function SequenceDiagram({nodes, edges}) {
+//   console.log("Generating edges, " , edges)
+// }
 export function StateDiagram ({nodes}) {
 
 
@@ -342,15 +333,120 @@ export function ClassDiagram({ nodes }) {
   if (!nodes || nodes.length === 0) {
     return "// No classes defined";
   }
+  console.log("start")
+  console.log(nodes)
+  const startTime = performance.now(); // ADDED
 
   let pseudocode = "";
+  let indentLevel = 1;
 
-  nodes.forEach(element => {
+  //addign na new line with
+  function addLine(text) {
+    if (pseudocode.length > 0) {
+      pseudocode += "\n";
+    }
+    pseudocode += "  ".repeat(indentLevel) + text;
+  }
+
+
+  
+  function printAttributes(node){
+    node.data.attributes.forEach(attribute => {
+      let accessModifier;
+      switch (attribute.access){
+        case "+":
+          accessModifier = "public";
+          break;
+        case "-": 
+          accessModifier = "private";
+          break;
+        case "#":
+          accessModifier = "protected";
+          break;
+        default: 
+          accessModifier = "default";
+          break;
+      }
+      addLine(`${accessModifier} ${attribute.value}`)
+    })
+  }
+
+  function printMethods(node){
+    node.data.methods.forEach(method => {
+      let accessModifier;
+      switch (method.access){
+        case "+":
+          accessModifier = "public";
+          break;
+        case "-": 
+          accessModifier = "private";
+          break;
+        case "#":
+          accessModifier = "protected";
+          break;
+        default: 
+          accessModifier = "default";
+          break;
+      }
+      addLine(`${accessModifier} ${method.value}`)
+    })
+  }
+
+  const getRelationship = (node) => {
+    if(!node.targets) return ""
+    let relationship = "";
+
+    node.targets.forEach(target => {
+      const targetClass = target.targetClass;
     
-  });
+      if(target.endSymbol === "closed arrow" && target.lineStyle === "line"){
+        relationship += `inherits ${targetClass} `; //inheritance
+      }else if(target.endSymbol === "closed arrow" && target.lineStyle === "dashLine"){
+        relationship += `implements ${targetClass} `; //realization
+      }else if(target.endSymbol === "open arrow" && target.lineStyle === "line"){ //directed association
+        relationship += `${target.middleLabel} ${targetClass} `; 
+      }else if(target.endSymbol === "open arrow" && target.lineStyle === "dashLine"){
+        relationship += `depends on ${targetClass} `; //dependency
+      }
+    })
+
+    node.sources.forEach(source => {
+      const sourceClass = source.sourceClass
+      if(source.endSymbol === "open diamond"){
+        relationship += `has-a ${sourceClass} `; //aggregation 
+      }else if(source.endSymbol === "filled diamond"){
+        relationship += `composed of ${sourceClass} `; //composition
+      }
+    })
+
+    return relationship;
+
+
+  }
+
+  nodes.forEach(node => {
+    
+    let classRelationships = getRelationship(node);
+
+    addLine(`CLASS ${node.data.className} ${classRelationships}`)
+    indentLevel++;
+    
+    //printing attributes and methods
+    printAttributes(node);
+    printMethods(node);
+
+    indentLevel--;
+
+    addLine("");
+
+  })
+
+  const endTime = performance.now(); // ADDED
+  const executionTime = (endTime - startTime).toFixed(5); // ADDED
+  console.log(`Algorithm executed in ${executionTime} milliseconds`); // ADDED
 
   return (
-    <pre style={{ 
+    <p style={{ 
       fontFamily: 'monospace', 
       whiteSpace: 'pre-wrap',
       lineHeight: '1.5',
@@ -359,7 +455,7 @@ export function ClassDiagram({ nodes }) {
       borderRadius: '4px'
     }}>
       {pseudocode}
-    </pre>
+    </p>
   );
 
 }

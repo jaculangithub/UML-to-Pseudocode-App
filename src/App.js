@@ -29,7 +29,7 @@ const App = () => {
 
         {/* Editor Screen */}
         <Route
-          path="/editor"
+          path="/editor/:type" //newly added
           element={<UMLEditorField diagramType={diagramType} />}
         />
       </Routes>

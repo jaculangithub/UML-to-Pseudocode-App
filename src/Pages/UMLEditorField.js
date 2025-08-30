@@ -10,6 +10,7 @@ import {
   addEdge,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import { useParams } from 'react-router-dom';
 import { throttle } from 'lodash'
 import {ActivityDiagram1, ActivityDiagram, SequenceDiagram, StateDiagram, ClassDiagram} from "./GeneratePseudocode";
 
@@ -50,6 +51,7 @@ const nodeTypes = {
   DestructionNode,
   ForkJoinNode,
   SwimLane,
+
   // Class
   ClassNode,
 
@@ -61,6 +63,7 @@ const nodeTypes = {
   ShadedCircle,
   ConditionNode,
   DestroyMessage,
+
   // State
 
 };
@@ -69,9 +72,9 @@ const edgeTypes = {
   "edge": CustomEdgeStartEnd,
 }
 
-export default function UMLEditorField( { type } ) {
-
-  const diagramType = "activity"; //activity, class, sequence state
+export default function UMLEditorField() {
+  const { type: diagramType } = useParams(); // Get the type from URL parameters
+  // const diagramType = type || "activity"; //activity, class, sequence state
   const [numberOfLane, setNumberOfLane] = useState(2);
   const [structuredData, setStructuredData] = useState(null);
   const [lastObjectSelected, setLastObjectSelected] = useState(null)
@@ -88,7 +91,9 @@ export default function UMLEditorField( { type } ) {
     // 'StartNode', 
     'EndNode', 
     'DestructionNode', 
-    'ForkJoinNode',
+    'VerticalLine',
+    `HorizontalLine`,
+
   ]
   
   const classDiagramNodes = [
@@ -104,100 +109,99 @@ export default function UMLEditorField( { type } ) {
     "ShadedCircle",
     "DestroyMessage",
   ]
-  // For Activity Diagram
-  const initialNodes = [
 
-    {
-      id: 'Swimlane1',
-      type: 'SwimLane',
-      position: { x: 0, y: 0 },
-      style: {
-        width: 800,
-        height: 600,
-      },
-      data: {
-        numberOfActors: 2,
-      },
-      dragHandle: '.drag-handle__label'
-    },   
-
-    {
-      id: 'node1',
-      type: 'StartNode',
-      data: { label: 'Action Node 1' },
-      position: { x: 100, y: 100 }, 
-      style: {
-        width: 50,
-        height: 50,
-      },
-      dragHandle: '.drag-handle__label',
-      parentId: 'Swimlane1',
-      extent: 'parent', // This node will be contained within the SwimLane
+  const getInitialNodes = () => {
+    if (diagramType === "activity") {
+      return [
+        {
+          id: 'Swimlane1',
+          type: 'SwimLane',
+          position: { x: 0, y: 0 },
+          style: {
+            width: 800,
+            height: 600,
+          },
+          data: {
+            numberOfActors: 2,
+          },
+          dragHandle: '.drag-handle__label'
+        },   
+        {
+          id: 'node1',
+          type: 'StartNode',
+          data: { label: 'Action Node 1' },
+          position: { x: 100, y: 100 }, 
+          style: {
+            width: 50,
+            height: 50,
+          },
+          dragHandle: '.drag-handle__label',
+          parentId: 'Swimlane1',
+          extent: 'parent',
+        }
+      ];
+    } else if (diagramType === "sequence") {
+      return [
+        {
+          id: 'act1',
+          type: 'Actor',
+          position: { x: 0, y: 0 },
+          data: { },
+          style: { width: 50, height: 200 },
+          dragHandle: '.drag-handle__label'
+        },
+        {
+          id: "obj1",
+          type: 'ObjectNode',
+          data: { },
+          position: { x: 300, y: 0 },
+          style: { width: 50, height: 200 },
+          dragHandle: '.drag-handle__label'
+        }
+      ];
+    } else if (diagramType === "class") {
+      return [
+        {
+          id: 'class1',
+          type: 'ClassNode',
+          position: { x: 0, y: 100 },
+          data: { 
+            className: 'ClassNode',
+            // attributes: ['attribute1: string', 'attribute2: number'],
+            // methods: ['method1(): void', 'method2(param: string): boolean']
+          },
+          style: { width: 300, height: 150 },
+          dragHandle: '.drag-handle__label'
+        }
+      ];
+    } else if (diagramType === "state") {
+      return [
+        {
+          id: 'state1',
+          type: 'ActionNode',
+          position: { x: 100, y: 100 },
+          data: { label: 'Initial State' },
+          style: { width: 100, height: 60 }
+        }
+      ];
     }
-
-  ];
-
-  // For Sequence Diagram
-
-  // const initialNodes = [
-  //   {
-  //     id: 'act1',
-  //     type: 'Actor',
-  //     position: {
-  //       x: 0, y: 0
-  //     },
-  //     style: {
-  //       width: 50, height: 200,
-  //     }
-  //   },
-  //   {
-  //     id: "obj1",
-  //     type: 'ObjectNode',
-  //     position: {
-  //       x: 300, y: 0
-  //     },
-  //     style:{
-  //       width: 50, height: 200,
-  //     },
-  //   },
-  //   {
-  //     id: "actBar1",
-  //     type: "ActivationBar",
-  //     position: { 
-  //       x: 0, y: 50,
-  //     },
-  //     style:{
-  //       width: "20px",
-  //       height: "80px",
-  //     },
-  //     parentId: "act1",
-  //     extent: "parent",
-  //   }
-  
-  // ]
-
-    // For Class Diagram
-  // const initialNodes = [
-
-  // ]
-
-    // For State Diagram
-  // const initialNodes = [
-
-  // ]
-
+    return []; // Default empty nodes
+  };
 
 
   const initialEdges = [
   ];
 
   const [n, numberOfNodes] = useState(0);
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [nodes, setNodes, onNodesChange] = useNodesState(getInitialNodes());
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
   //array of marker type
   const markerTypes = ["none", "open arrow", "closed arrow", "open diamond", "filled diamond"];
-
+  useEffect(() => {
+    console.log("Nodes ", nodes)
+    console.log("Edges ", edges)
+  }, [nodes])
   // useEffect(() => {
   //   console.log("Last Object: ", lastObjectSelected)
     
@@ -248,21 +252,24 @@ export default function UMLEditorField( { type } ) {
   const addNode = (nodeType) => {
     console.log(nodeType)
     numberOfNodes(n + 1);
-    let ID = `${nodeType === "ObjectNode" ? "obj": "Node"} ${n}`;
+    let ID = `${nodeType === "ObjectNode" ? `obj`: "Node"} ${n}`;
+
     const newNode = {
       id: ID,
-      type: nodeType,
+      type: (nodeType === "VerticalLine" || nodeType === "HorizontalLine") && diagramType === "activity"? "ForkJoinNode": nodeType,
       data: {
         nodes: nodeType === "SwimLane" ? nodes : undefined,
-        label: `Node ${n}` 
+        label: `Node ${n}`,
+        orientation: nodeType,
+        className: "Class",
       },
       position: {
         x: nodeType === "DestroyMessage" || nodeType === "Activationbar"? 0 : 200,
         y: nodeType === "DestroyMessage" || nodeType === "ActivationBar"? 0 : 200,
       },
       style: {
-        width: nodeType === "ActivationBar" ? 20 : diagramType === "class" ? 300: nodeType === "LoopNode" || nodeType === "ConditionNode" ? 400 :  50,
-        height: nodeType=== "ActivationBar" ? 40 : diagramType === "class" ? 200: nodeType === "LoopNode" ||  nodeType === "ConditionNode" ? 500 : 50,
+        width: nodeType === "ActivationBar" ? 20 : diagramType === "class" ? 300: nodeType === "LoopNode" || nodeType === "ConditionNode" ? 400 : nodeType === "VerticalLine" ? 20 : nodeType === "HorizontalLine" ? 200 : 50,
+        height: nodeType=== "ActivationBar" ? 40 : diagramType === "class" ? 200: nodeType === "LoopNode" ||  nodeType === "ConditionNode" ? 500 : nodeType === "VerticalLine" ? 200 : nodeType === "HorizontalLine" ? 20 : 50,
         zIndex: nodeType === "SwimLane" || nodeType === "LoopNode" || nodeType === "ConditionNode" || nodeType === "Actor" || nodeType === "ObjectNode" ? -1 : "1000", // Ensure this node is above the first one
       },
       dragHandle: '.drag-handle__label',
@@ -297,8 +304,8 @@ export default function UMLEditorField( { type } ) {
             sourceHandle: params.sourceHandle,
             targetHandle: params.targetHandle,
             startLabel: diagramType === "sequence" ? undefined : " ",
-            endLabel: diagramType === "sequence" ? undefined : " ",
-            middleLabel: " ",
+            endLabel:  diagramType === "class" ? " " : undefined, 
+            middleLabel: ["activity", "state"].includes(diagramType) ? undefined : " ",
             startSymbol: 'none',
             endSymbol: diagramType === "activity" || diagramType === "sequence" ? "open arrow":  'none',
             relationshipType: 'directedAssociation', // Add if needed
@@ -371,16 +378,13 @@ export default function UMLEditorField( { type } ) {
     const laneWidth = swimLaneWidth / swimLane.data.numberOfActors;
     
     const lane = Math.floor(nodeX / laneWidth);
-    // console.log("Lane: ", lane)
-    // console.log("SwimLane width: ", swimLaneWidth)
-    // console.log("Node: position: ", nodeX)
-    // console.log("laneWidth: ", laneWidth)
-
-    return `Lane ${lane + 1}`;
+    return `${swimLane.data.actors[lane]}` 
+    // return `Lane ${lane + 1}`;
 
   }
 
   const restructureData = (nodes, edges) => {
+    // console.log("Resadads Node", nodes)
     if(diagramType === 'activity'){
       return reStructureActivityDiagram(nodes, edges);
     } else if(diagramType === 'class'){
@@ -394,7 +398,8 @@ export default function UMLEditorField( { type } ) {
   }
 
   const reStructureSequenceDiagram = (edges) => {
-
+    console.log("Initial Nodessss: ", nodes) 
+    console.log("Restructiasdndasdas")
     let loopNodes = [];
     let conditionNodes = [];
     //get loop nad conditional nodes
@@ -404,13 +409,26 @@ export default function UMLEditorField( { type } ) {
       } else if (node.type === "ConditionNode") {
         conditionNodes.push(node);
       }
-    });    
+    });  
+    
+    const getActor = (nodeId) => {
+      const activationBar = nodes.find(node => node.id === nodeId);
+      const parent = nodes.find(node => node.id === activationBar.parentId);
+      return parent?.data?.actorName;
+    }
 
     const edgesCopy = edges.map(edge => {
       // Create a clean copy of the edge
+      console.log(edge.source, "source -  targte ", edge.target)
       const edgeCopy = {
         ...edge,
-        data: { ...edge.data } // Clone data object
+        data: { 
+          ...edge.data,
+          source: getActor(edge.source),
+          target: getActor(edge.target),
+          sourceNodeType: nodes.find(node => node.id === edge.source)?.type,
+          targetNodeType: nodes.find(node => node.id === edge.target)?.type,
+        } // Clone data object
       };
 
       // Get edge coordinates (with fallbacks)
@@ -444,7 +462,7 @@ export default function UMLEditorField( { type } ) {
           nodeBottom >= Math.max(startPosY, targetPosY)
         );
       })?.id || null;
-
+      // console.log("edgesss: ", edgeCopy)
       return edgeCopy;
     });
 
@@ -459,17 +477,14 @@ export default function UMLEditorField( { type } ) {
     });
 
     // console.log(edgesCopy, "Loop Width", loopNodes[0].width, "Loop Height: ", loopNodes[0].height, conditionNodes)
-    console.log(edgesCopy)
+    console.log("edges copy", edgesCopy)
 
     let sourceNode = nodes.find(n => n.id === edgesCopy[0].source)
     let parent = sourceNode.parentId
 
     console.log("Parent", parent)
-
+    console.log("Ndoes", nodes) 
     setStructuredData(edgesCopy);
-
-    // return edgesCopy
-
   };
 
   const reStructureClassDiagram = (nodes, edges) => {
@@ -492,6 +507,7 @@ export default function UMLEditorField( { type } ) {
 
         // Add to source node's targets (outgoing edges)
         sourceNode.targets.push({
+          targetClass: nodes.find(node => node.id === targetNode.id)?.data?.className,
           nodeId: targetNode.id,
           edgeId: edge.id,
           ...(edge.data || {})   // Include any edge data
@@ -499,6 +515,7 @@ export default function UMLEditorField( { type } ) {
 
         // Add to target node's sources (incoming edges)
         targetNode.sources.push({
+          sourceClass: nodes.find(node => node.id === sourceNode.id)?.data?.className,
           nodeId: sourceNode.id,
           edgeId: edge.id,
           ...(edge.data || {})   // Include any edge data
@@ -508,7 +525,6 @@ export default function UMLEditorField( { type } ) {
 
     console.log("Nodess: ", classNodes)
     setStructuredData(classNodes)
-
   }
 
   // restructure data for easily convertion to pseudocode
@@ -519,7 +535,7 @@ export default function UMLEditorField( { type } ) {
   
     const enhancedNodes = nodes.map(node => ({
         id: node.id,
-        type: `${node.type === "DecisionNode" ? 'MergeNode': node.type}`,    // Default type if not specified
+        type: `${node.type === "DecisionNode" ? 'MergeNode': node.type === "ForkJoinNode" ? "JoinNode" : node.type}`,    // Default type if not specified
         data: node.data || {},           // Preserve original node data
         sources: [],                     // Nodes that point TO this node (incoming)
         targets: [],                     // Nodes this node points TO (outgoing)
@@ -538,7 +554,11 @@ export default function UMLEditorField( { type } ) {
       if (sourceNode && targetNode) {
         //if the source node has at least one element or target, it considered as DecisionNode
         if(sourceNode.targets?.length > 0){
-          sourceNode.type = 'DecisionNode'
+          if(sourceNode.type === "MergeNode" || sourceNode.type === "DecisionNode"){
+            sourceNode.type = 'DecisionNode'
+          }else if(sourceNode.type === "ForkNode" || sourceNode.type === "JoinNode"){
+            sourceNode.type = "ForkNode"
+          }
         }
 
         // Add to source node's targets (outgoing edges)
@@ -592,7 +612,8 @@ export default function UMLEditorField( { type } ) {
     })
   
   }, [])
-  
+
+  //subject to change for optimization
   const setLabel = useCallback((position, newLabel, id) => {
     setEdges((eds) =>
       eds.map((edge) =>
@@ -685,6 +706,7 @@ export default function UMLEditorField( { type } ) {
         {/* generate psuedocode */}
         <button 
           onClick={() => {
+            console.log("GEnrasa")
             restructureData(nodes, edges)
             setShowPseudocode(true);
           }}
@@ -969,7 +991,9 @@ export default function UMLEditorField( { type } ) {
             {/* {nodeType === 'StartNode' && 'Initial State'} */}
             {nodeType === 'EndNode' && 'Final State'}
             {nodeType === 'DestructionNode' && 'Destruction Node'}
-            {nodeType === 'ForkJoinNode' && 'Fork/Join Node'}
+            {nodeType === 'VerticalLine' && 'ForkJoinNode Vertical'}
+            {nodeType === 'HorizontalLine' && 'ForkJoinNode Horizontal'}
+
           
           </button>
 

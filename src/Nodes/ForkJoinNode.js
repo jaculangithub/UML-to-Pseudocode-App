@@ -1,42 +1,10 @@
-import { memo, useEffect } from "react";
+import { memo } from "react";
 import { Handle, Position, NodeResizer } from "@xyflow/react";
 import { useState } from "react";
 
-const ForkJoinNode = ({ data, selected, id, width = 10, height = 300 }) => {
+const ForkJoinNode = ({ data, selected, id}) => {
   const [isHovered, setIsHovered] = useState(false);
-  const [isRotated, setIsRotated] = useState(false);
-  const [currentWidth, setCurrentWidth] = useState(width);
-  const [currentHeight, setCurrentHeight] = useState(height);
-
-  const handleRotation = () => {
-    setIsRotated(!isRotated);
-  };
-
-  useEffect(() => {
-    if (isRotated) {
-      setCurrentWidth(height);
-      setCurrentHeight(width);
-    } else {
-      setCurrentWidth(width);
-      setCurrentHeight(height);
-    }
-  }, [isRotated, width, height]);
-
-  // Handle positions need to adjust based on rotation
-  const getHandlePositions = () => {
-    if (isRotated) {
-      return {
-        left: ['25%', '50%', '75%'], // Now these are horizontal positions
-        right: ['75%', '50%', '25%']  // Now these are horizontal positions
-      };
-    }
-    return {
-      left: ['75%', '50%', '25%'], // Vertical positions
-      right: ['25%', '50%', '75%'] // Vertical positions
-    };
-  };
-
-  const { left, right } = getHandlePositions();
+  const positions = [0.25, 0.5, 0.75]; // Using decimals instead of percentages
 
   return (
     <div 
@@ -44,77 +12,99 @@ const ForkJoinNode = ({ data, selected, id, width = 10, height = 300 }) => {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       style={{
-        position: 'relative',
-        width: `${currentWidth}px`,
-        height: `${currentHeight}px`,
+        position: 'absolute',
+        width: `100%`,
+        height: `100%`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: "black",
-        borderRadius: '20px',
-        transition: 'width 0.1s ease, height 0.1s ease',
+        borderRadius: '2px',
       }}
     >
       <NodeResizer
         color="#ff0071"
-        width= '100%'
-        height= '100%'
+        width='100%'
+        height='100%'
         keepAspectRatio={false}
         isVisible={selected}
-        minWidth={10}
-        minHeight={30}
+        minWidth={30}
+        minHeight={10}
       />
 
-      <button 
-        onClick={handleRotation}
-        style={{
-          position: 'absolute',
-          top: 5,
-          right: 5,
-          fontSize: 12,
-          padding: "2px 5px",
-          backgroundColor: "#ff0071",
-          color: "#fff",
-          border: "none",
-          borderRadius: 4,
-          cursor: "pointer",
-          zIndex: 10,
-        }}
-      >
-        ⟳
-      </button>
+      {/* Vertical line */}
+      {data?.orientation === "VerticalLine" && (
+        <>
+          {/* Left Handles */}
+          {positions.map((pos, index) => (
+            <Handle 
+              key={`left-${index}`}
+              type='source'
+              id={`left-${index}`}
+              position={Position.Left}
+              style={{ 
+                top: `${pos * 100}%`,
+                backgroundColor: "black", 
+                opacity: isHovered || selected ? 1 : 0, 
+                pointerEvents: 'auto',
+              }}  
+            />
+          ))}
 
-      <>
-        {left.map((pos, index) => (
-          <Handle 
-            key={`left-${index}`}
-            type='source'
-            id={`left-${index}`}
-            position={isRotated ? Position.Top : Position.Left}
-            style={{ 
-              [isRotated ? 'left' : 'top']: pos, 
-              backgroundColor: "black", 
-              opacity: isHovered || selected ? 1 : 0, 
-              pointerEvents: 'auto',
-            }}  
-          />
-        ))}
+          {/* Right Handles */}
+          {positions.map((pos, index) => (
+            <Handle 
+              key={`right-${index}`}
+              type='source'
+              id={`right-${index}`}
+              position={Position.Right}
+              style={{ 
+                top: `${pos * 100}%`,
+                backgroundColor: "black", 
+                opacity: isHovered || selected ? 1 : 0, 
+                pointerEvents: 'auto',
+              }}  
+            />
+          ))}
+        </>
+      )}
+  
+      {/* Horizontal line */}
+      {data?.orientation === "HorizontalLine" && (
+        <>
+          {/* Top Handles */}
+          {positions.map((pos, index) => (
+            <Handle 
+              key={`top-${index}`}
+              type='source'
+              id={`top-${index}`}
+              position={Position.Top}
+              style={{ 
+                left: `${pos * 100}%`,
+                backgroundColor: "black", 
+                opacity: isHovered || selected ? 1 : 0, 
+                pointerEvents: 'auto',
+              }}  
+            />
+          ))}
 
-        {right.map((pos, index) => (
-          <Handle 
-            key={`right-${index}`}
-            type='source'
-            id={`right-${index}`}
-            position={isRotated ? Position.Bottom : Position.Right}
-            style={{ 
-              [isRotated ? 'left' : 'top']: pos, 
-              backgroundColor: "black", 
-              opacity: isHovered || selected ? 1 : 0, 
-              pointerEvents: 'auto',
-            }}  
-          />
-        ))}
-      </>
+          {/* Bottom Handles */}
+          {positions.map((pos, index) => (
+            <Handle 
+              key={`bottom-${index}`}
+              type='source'
+              id={`bottom-${index}`}
+              position={Position.Bottom}
+              style={{ 
+                left: `${pos * 100}%`,
+                backgroundColor: "black", 
+                opacity: isHovered || selected ? 1 : 0, 
+                pointerEvents: 'auto',
+              }}  
+            />
+          ))}
+        </>
+      )}
     </div>
   );
 };

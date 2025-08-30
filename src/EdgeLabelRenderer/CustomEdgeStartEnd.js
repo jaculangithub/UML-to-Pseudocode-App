@@ -12,7 +12,7 @@ import {
 import { DiamondMarker, ArrowMarker } from '../Markers/RelationshipSymbol';
 import { FaIgloo } from 'react-icons/fa';
 
-function EdgeLabel({ transform, label, onChange,}) {
+function EdgeLabel({ transform, label, onChange, diagramType, source, target}) {
   const [inputValue, setInputValue] = useState(label);
   const [debounceTimer, setDebounceTimer] = useState(null);
 
@@ -35,6 +35,7 @@ function EdgeLabel({ transform, label, onChange,}) {
 
   // Cleanup timer on unmount
   useEffect(() => {
+
     return () => {
       if (debounceTimer) {
         clearTimeout(debounceTimer);
@@ -56,19 +57,22 @@ function EdgeLabel({ transform, label, onChange,}) {
       }}
       className="nodrag nopan"
     >
-      <input
-        type="text"
-        value={inputValue}
-        onChange={handleChange}
-        placeholder={label}
-        style={{
-          border: 'none',
-          background: 'transparent',
-          outline: 'none',
-          textAlign: 'center',
-          width: '100px',
-        }}
-      />
+    <textarea
+      rows={2}
+      value={inputValue}
+      onChange={handleChange}
+      placeholder={label}
+      style={{
+        border: 'none',
+        backgroundColor: "rgba(219, 216, 216, 0.15)",
+        opacity: 1,
+        outline: 'none',
+        textAlign: (diagramType === "sequence" && source === target)? `left` : 'center',
+        width: '150px',
+        resize: 'none',   // prevent manual resize (optional)
+      }}
+    />
+
     </div>
   );
 }
@@ -82,6 +86,7 @@ const CustomEdgeStartEnd = ({
   sourcePosition,
   targetPosition,
   data,
+  source, target,
 }) => {
 
 
@@ -97,18 +102,19 @@ const CustomEdgeStartEnd = ({
 
   //  const [edgeType, setEdgeType] = useState(data.relationshipType.toLowerCase())
   
-  useEffect(() => {
-    // console.log("Edge Data: ",   id,
-    //   "SourceX", sourceX,
-    //   "SourceY", sourceY,
-    //   "TargetX", targetX,
-    //   "TargetY", targetY,
-    //   "sourcePosition", sourcePosition,
-    //   "targetPositiion", targetPosition,
-    //   "Data", data,
-    //   "LabelX ", labelX,
-    //   "labelY ", labelY)
-  })
+  // useEffect(() => {
+  //   // console.log("Edge Data: ",   id,
+  //   //   "SourceX", sourceX,
+  //   //   "SourceY", sourceY,
+  //   //   "TargetX", targetX,
+  //   //   "TargetY", targetY,
+  //   //   "sourcePosition", sourcePosition,
+  //   //   "targetPositiion", targetPosition,
+  //   //   "Data", data,
+  //   //   "LabelX ", labelX,
+  //   //   "labelY ", labelY)
+  //   console.log("soruce", source, "Target", target)
+  // })
 
   const [stepPath, labelX, labelY] = getSmoothStepPath(edge);
 
@@ -162,7 +168,34 @@ const CustomEdgeStartEnd = ({
     // console.log("Data: ", data);
     setStartSymbol(data.startSymbol);
     setEndSymbol(data.endSymbol);
+
+    // console.log("Source", data.sourceHandle)
+    // console.log("Target", data.targetHandle)
+
   })
+
+  const getHandlePosition = (handlePosition, startEnd) => {
+
+    // console.log("Getting handle:", handlePosition);
+    if(handlePosition.includes("left")){
+      return `translate(-50%, -130%) 
+              translate(${startEnd === "start" ? sourceX-30 : targetX-30}px,
+                        ${startEnd === "start"? sourceY+10 : targetY+10}px)`
+    }else if (handlePosition.includes("right")){
+      return `translate(-50%, -130%)
+              translate(${startEnd === "start" ? sourceX+30 : targetX+30}px,
+                        ${startEnd === "start"? sourceY+10 : targetY+10}px)`
+    }else if (handlePosition.includes("bottom")){
+      return `translate(-50%, 30%) 
+              translate(${startEnd === "start" ? sourceX : targetX}px,
+                        ${startEnd === "start" ? sourceY : targetY}px)`
+    }else if (handlePosition.includes("top")){
+      return `translate(-50%, -130%) 
+              translate(${startEnd === "start" ? sourceX : targetX}px,
+                        ${startEnd === "start" ? sourceY : targetY}px)`
+    }
+
+  }
 
   return (
     <>
@@ -197,10 +230,10 @@ const CustomEdgeStartEnd = ({
 
             {startLabel && (
                 <EdgeLabel
-                transform={`translate(-50%, ${data.sourceHandle === 'bottom'? `30`: '-130'}%) 
-                  translate(${sourceX}px,${sourceY}px)`}
+                transform= {getHandlePosition(data.sourceHandle, "start")}
                 label={startLabel}
                 onChange={(newData) => handleDataChange('start', newData)}
+                diagramType = {data.diagramType}
               />
             )}
             
@@ -210,9 +243,11 @@ const CustomEdgeStartEnd = ({
         {middleLabel && (
           <>
             <EdgeLabel
-              transform={`translate(-50%, -50%) translate(${labelX}px, ${labelY - (data.diagramType === "sequence" ? 10 : 0)}px)`}
+              transform={`translate(${source === target? `0%`: `-50%`}, ${source === target? '-30%' : `-50%`}) translate(${labelX}px, ${labelY - (data.diagramType === "sequence" ? 10 : 0)}px)`}
               label={middleLabel}
               onChange={(newData) => handleDataChange('middle', newData)}
+              diagramType = {data.diagramType}
+              source = {source} target = {target}
             />
           </>
         )}
@@ -231,12 +266,12 @@ const CustomEdgeStartEnd = ({
                 x1={targetX} y1={targetY} x2 = {sourceX} y2 = {sourceY}
                 handlePosition={data.targetHandle} edgeType={data.stepLine? "step": "straight"}
                 symbol = {data.endSymbol}
+                diagramType = {data.diagramType}
               />
             ) : null /* Default case (optional) */}
             {endLabel && (
               <EdgeLabel
-                transform={`translate(-50%, ${data.targetHandle === 'bottom'? `30`: '-130'}%) 
-                  translate(${targetX}px,${targetY}px)`}
+                transform= {getHandlePosition(data.targetHandle, "end")}
                 label={endLabel}
                 onChange={(newData) => handleDataChange('end', newData)}
             />

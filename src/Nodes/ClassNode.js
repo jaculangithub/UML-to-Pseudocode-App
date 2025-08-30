@@ -1,17 +1,24 @@
 
 // as of 1:22AM 7/30/2025
 import { NodeResizer } from "@xyflow/react";
-import { memo, useState } from "react";
+import { memo, useState, useEffect } from "react";
 import { FaPlus, FaTrash } from "react-icons/fa";
 import { Handle, Position } from "@xyflow/react";
 
 const ClassNode = ({ selected, data }) => {
-  const [className, setClassName] = useState(data.label);
+  const [className, setClassName] = useState(data.className);
   const [isHovered, setIsHovered] = useState(false);  
 
   const [attributes, setAttributes] = useState([
     { access: "+", value: "attribute: string" },
   ]);
+
+  //the attributes nad methods will store or copy to data. data.attributes, data.method
+  useEffect(() => {
+    data.attributes = attributes
+    data.methods = methods
+    data.className = className;
+  })
 
   const [methods, setMethods] = useState([
     { access: "+", value: "method(): void" },
@@ -39,7 +46,6 @@ const ClassNode = ({ selected, data }) => {
     <div
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-
       style={{
         height: "100%",
         width: "100%",

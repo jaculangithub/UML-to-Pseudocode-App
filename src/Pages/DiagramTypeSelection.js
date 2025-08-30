@@ -1,20 +1,23 @@
-// last updated
 import React, { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Container, Button, Row, Col, Card, Navbar, Nav, Alert } from "react-bootstrap";
 import { FaFileImport, FaFileImage, FaFileCode } from "react-icons/fa";
 
-const DiagramSelection = ({ onSelectDiagram }) => {
+const DiagramSelection = () => {
   const navigate = useNavigate();
-  const diagramTypes = ["Class", "Activity", "Sequence", "State"];
+  const diagramTypes = ["class", "activity", "sequence", "state"];
   const [selectedDiagram, setSelectedDiagram] = useState(null);
   const [dragActive, setDragActive] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
 
   const handleSelect = (type) => {
-    // setSelectedDiagram(type);
-    // onSelectDiagram(type);
-    navigate("/editor");
+    setSelectedDiagram(type);
+  };
+
+  const navigateToEditor = () => {
+    if (selectedDiagram) {
+      navigate(`/editor/${selectedDiagram}`);
+    }
   };
 
   const handleDrag = useCallback((e) => {
@@ -89,6 +92,17 @@ const DiagramSelection = ({ onSelectDiagram }) => {
               </Col>
             ))}
           </Row>
+          
+          <div className="mt-4">
+            <Button 
+              variant="primary" 
+              size="lg" 
+              onClick={navigateToEditor}
+              disabled={!selectedDiagram}
+            >
+              Create {selectedDiagram ? selectedDiagram.charAt(0).toUpperCase() + selectedDiagram.slice(1) : ""} Diagram
+            </Button>
+          </div>
         </section>
 
         {/* File Import Section */}
@@ -119,17 +133,17 @@ const DiagramSelection = ({ onSelectDiagram }) => {
               <FaFileCode size={48} className="text-muted mb-3" />
               <p className="mb-2 fw-semibold">Drag & Drop your files here</p>
               <p className="text-muted mb-3">Supports: PNG, XMI, XML</p>
-              <Button variant="outline-primary">
+              <Button variant="outline-primary" onClick={() => document.getElementById('fileInput').click()}>
                 Or browse files
-                <input 
-                  type="file" 
-                  multiple 
-                  accept=".png,.xmi,.xml,image/png"
-                  onChange={handleFileChange}
-                  style={{ display: "none" }}
-                  id="fileInput"
-                />
               </Button>
+              <input 
+                type="file" 
+                multiple 
+                accept=".png,.xmi,.xml,image/png"
+                onChange={handleFileChange}
+                style={{ display: "none" }}
+                id="fileInput"
+              />
             </div>
           </div>
 
@@ -205,38 +219,42 @@ const DiagramSelection = ({ onSelectDiagram }) => {
 };
 
 // Sub-components for better organization
-const DiagramCard = ({ type, isSelected, onClick }) => (
-  <Card
-    onClick={onClick}
-    style={{
-      border: isSelected ? "2px solid #0d6efd" : "none",
-      borderRadius: "10px",
-      boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
-      transition: "all 0.2s ease",
-      cursor: "pointer",
-      height: "100%",
-      backgroundColor: "white",
-    }}
-    className="h-100"
-  >
-    <Card.Body className="d-flex flex-column">
-      <h3 className="h5 fw-bold mb-3">{type} Diagram</h3>
-      <p className="text-muted mb-4">
-        Create and edit {type.toLowerCase()} diagrams with ease.
-      </p>
-      <Button
-        variant={isSelected ? "primary" : "outline-primary"}
-        className="mt-auto"
-        onClick={(e) => {
-          e.stopPropagation();
-          onClick();
-        }}
-      >
-        {isSelected ? "Selected" : "Select"}
-      </Button>
-    </Card.Body>
-  </Card>
-);
+const DiagramCard = ({ type, isSelected, onClick }) => {
+  const displayName = type.charAt(0).toUpperCase() + type.slice(1);
+  
+  return (
+    <Card
+      onClick={() => onClick(type)}
+      style={{
+        border: isSelected ? "2px solid #0d6efd" : "none",
+        borderRadius: "10px",
+        boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+        transition: "all 0.2s ease",
+        cursor: "pointer",
+        height: "100%",
+        backgroundColor: "white",
+      }}
+      className="h-100"
+    >
+      <Card.Body className="d-flex flex-column">
+        <h3 className="h5 fw-bold mb-3">{displayName} Diagram</h3>
+        <p className="text-muted mb-4">
+          Create and edit {type.toLowerCase()} diagrams with ease.
+        </p>
+        <Button
+          variant={isSelected ? "primary" : "outline-primary"}
+          className="mt-auto"
+          onClick={(e) => {
+            e.stopPropagation();
+            onClick(type);
+          }}
+        >
+          {isSelected ? "Selected" : "Select"}
+        </Button>
+      </Card.Body>
+    </Card>
+  );
+};
 
 const FeatureCard = ({ icon, title, text }) => (
   <div className="h-100 p-3 text-center">

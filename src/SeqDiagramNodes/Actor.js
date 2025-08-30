@@ -1,8 +1,15 @@
-import { memo } from 'react';
+import { memo, useEffect } from 'react';
 import actorImage from './Actor.png'; 
 import { NodeResizer }  from '@xyflow/react';
 
-const Actor = ({ selected }) => {
+const Actor = ({ selected, data }) => {
+
+  useEffect(() => {
+
+    data.actorName = "User";
+    
+  })
+
   return (
     <div
       style={{

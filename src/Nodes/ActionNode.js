@@ -1,8 +1,31 @@
-import { memo, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import { Handle, Position, NodeResizer } from "@xyflow/react";
 
 const ActionNode = ({ data, selected }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [label, setLabel] = useState("Action");
+  const [inputValue, setInputValue] = useState(`Action`);
+  const [debounceTimer, setDebounceTimer] = useState(null);
+
+  useEffect(() => {
+    data.label = label
+  })
+
+  const handleLabelChange = (e) => {
+    const newValue = e.target.value;
+    setInputValue(newValue);
+
+    if(debounceTimer){
+      clearTimeout(debounceTimer);
+    }
+
+    setDebounceTimer(
+      setTimeout(() => {
+        setLabel(newValue? newValue : "");
+      }, 1000)
+    )
+
+  }
 
   return (
       <div
@@ -11,7 +34,7 @@ const ActionNode = ({ data, selected }) => {
         onMouseLeave={() => setIsHovered(false)}
         style={{
           position: 'relative',
-          backgroundColor: "transparent",
+          backgroundColor: "white",
           height: '100%',
           width: '100%',
         }}
@@ -38,7 +61,21 @@ const ActionNode = ({ data, selected }) => {
             // backgroundColor: 'white',
           }}
         >
-          {data.label}
+          {/* {data.label} */}
+          <input
+            type = "text"
+            value = {inputValue}
+            onChange={handleLabelChange}
+            placeholder= {label}
+            style = {{
+              border: `none`,
+              background: `transparent`,
+              outline: `none`,
+              textAlign: `center`,
+              width: `90%`,
+              backgroundColor: "white"
+            }}
+          />
         </div>
 
         {/* Edge handles */}
