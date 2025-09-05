@@ -60,6 +60,31 @@ const DiagramSelection = () => {
     setUploadedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
+  // 🔹 Send files to Python backend
+  const sendFilesToBackend = async () => {
+    if (uploadedFiles.length === 0) {
+      console.log("No files to upload");
+      return;
+    }
+
+    const formData = new FormData();
+    uploadedFiles.forEach((file) => {
+      formData.append("files", file);
+    });
+
+    try {
+      const res = await fetch("http://localhost:5000/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      console.log("Response from Python backend:", data); // 👈 Print result in console
+    } catch (err) {
+      console.error("Error uploading files:", err);
+    }
+  };
+
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#f8f9fa" }}>
       {/* Navbar */}
@@ -175,6 +200,13 @@ const DiagramSelection = () => {
                   </Alert>
                 ))}
               </div>
+
+              {/* Send to backend button */}
+              <div className="mt-4 text-center">
+                <Button variant="success" onClick={sendFilesToBackend}>
+                  Send to Backend
+                </Button>
+              </div>
             </div>
           )}
         </section>
@@ -218,7 +250,7 @@ const DiagramSelection = () => {
   );
 };
 
-// Sub-components for better organization
+// Sub-components
 const DiagramCard = ({ type, isSelected, onClick }) => {
   const displayName = type.charAt(0).toUpperCase() + type.slice(1);
   
