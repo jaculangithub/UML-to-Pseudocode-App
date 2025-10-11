@@ -87,7 +87,8 @@ const sequenceDiagramGuidelines = (
     1. First, CLICK the object (lifeline) you want to apply the interaction to.  <br />
     2. After selecting the object, choose 'Activation Bar' or 'Destroy (X)' from the left panel. <br />
     3. Make sure the object is highlighted before applying to ensure it attaches correctly. <br />
-    4. If nothing happens, reselect the object and try again. <br /> <br />
+    4. If nothing happens, reselect the object and try again. <br />
+    5. To delete a notation or arrow line, select the element first (either a node or edge), then click the delete button. <br />
     
     Tip: The feature will only work if an object is currently active/selected.
   </>
@@ -111,6 +112,7 @@ const classDiagramGuidelines = (
     1. When you click the access modifier, a drop-down menu will appear to let you change the access level of the selected attribute or method. <br/>
     2. Use the proper relationship connectors (e.g., Association, Inheritance) to maintain a correct and organized structure. <br/>
     3. Click the delete icon to remove an attribute or method, and use the plus (+) icon to add a new one. <br/>
+    4. To delete a notation or arrow line, select the element first (either a node or edge), then click the delete button. <br/>
   </>
 );
 
@@ -121,6 +123,7 @@ const stateDiagramGuidelines = (
     1. To add a substate into the Composite State, select teh composite State first to add a state inside the composite state, otherwise it will display outside <br/>
     2. No StartNode will not Display Pseudocode. Same with composite state, not starting with a startnode inside it will not display the substate <br/>
     3. To add transition labels, click the transition line and enter the text in the input field in the beginning of the line. <br/>
+    4. To delete a notation or arrow line, select the element first (either a node or edge), then click the delete button. <br/>
   </>
 );
 
