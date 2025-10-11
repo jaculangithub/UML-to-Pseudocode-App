@@ -53,9 +53,9 @@ const ObjectNode = ({ id, selected, data }) => {
       >
         <input 
           type="text"
-          value={data.actorName}
+          value={inputValue}
           onChange={handleObjectNameChange}
-          placeholder= "Object"
+          placeholder= "Obj"
           style={{
             border: `none`,
             background: `transparent`,

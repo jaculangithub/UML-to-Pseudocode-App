@@ -2,7 +2,7 @@ import React, { memo, useEffect, useState } from "react";
 import { Handle, Position, NodeResizer } from "@xyflow/react";
 
 function CompositeStateNode({ data, selected }) {
-  const [label, setLabel] = useState(data.label || "Composite State");
+  const [label, setLabel] = useState("Composite State");
 
   useEffect(() => {
     data.label = label;
