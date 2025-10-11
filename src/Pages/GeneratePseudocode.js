@@ -1084,9 +1084,9 @@ export function ClassDiagram({ nodes }) {
     let attributes = ""
     let c = 0
     node.data.attributes.forEach(attribute => {
-      
+    
       if (!attribute.value || attribute.value.trim() === "") return;
-
+      
       let accessModifier;
 
       switch (attribute.access){

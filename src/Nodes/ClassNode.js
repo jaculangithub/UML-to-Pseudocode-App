@@ -25,9 +25,14 @@ const ClassNode = ({ selected, data }) => {
   ]);
 
   const updateRow = (setFn, list, index, key, value) => {
+    const trimmedValue = value.trim();
+
+    if (trimmedValue === "") return;
+
     const newList = [...list];
     newList[index][key] = value;
     setFn(newList);
+
   };
 
   const addRow = (setFn, list, newItem) => {
