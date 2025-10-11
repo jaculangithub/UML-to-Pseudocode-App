@@ -100,6 +100,7 @@ const activityDiagramGuidelines = (
     1. To add text to a line, use the input field that appears at the beginning of the arrow line. <br/>
     2. Deselect the Swimlane or click another notation to enable to select the arrow line. <br/>
     3. The pseudocode will not generate if there is no Start Node present. <br/>
+    4. To delete a notation or arrow line, select the element first (either a node or edge), then click the delete button.
   </>
 );
 
