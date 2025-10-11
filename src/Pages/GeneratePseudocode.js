@@ -1084,8 +1084,11 @@ export function ClassDiagram({ nodes }) {
     let attributes = ""
     let c = 0
     node.data.attributes.forEach(attribute => {
+      
+      if (!attribute.value || attribute.value.trim() === "") return;
+
       let accessModifier;
-      c++;
+
       switch (attribute.access){
         case "+":
           accessModifier = "public";
@@ -1103,11 +1106,11 @@ export function ClassDiagram({ nodes }) {
       addLine(`${accessModifier} ${attribute.value}`)
     })
     
-    // return attributes;
   }
 
   function printMethods(node){
     node.data.methods.forEach(method => {
+      if (!method.value || method.value.trim() === "") return;
       let accessModifier;
       switch (method.access){
         case "+":
