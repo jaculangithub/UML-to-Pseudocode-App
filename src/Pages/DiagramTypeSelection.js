@@ -45,45 +45,45 @@ const DiagramSelection = () => {
     }
   }, []);
 
-  const handleFileChange = (e) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const files = Array.from(e.target.files).filter(file => 
-        file.type === "image/png" || 
-        file.name.endsWith(".xmi") || 
-        file.name.endsWith(".xml")
-      );
-      setUploadedFiles(files);
-    }
-  };
+  // const handleFileChange = (e) => {
+  //   if (e.target.files && e.target.files.length > 0) {
+  //     const files = Array.from(e.target.files).filter(file => 
+  //       file.type === "image/png" || 
+  //       file.name.endsWith(".xmi") || 
+  //       file.name.endsWith(".xml")
+  //     );
+  //     setUploadedFiles(files);
+  //   }
+  // };
 
-  const removeFile = (index) => {
-    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
-  };
+  // const removeFile = (index) => {
+  //   setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+  // };
 
-  // 🔹 Send files to Python backend
-  const sendFilesToBackend = async () => {
-    if (uploadedFiles.length === 0) {
-      console.log("No files to upload");
-      return;
-    }
+  // // 🔹 Send files to Python backend
+  // const sendFilesToBackend = async () => {
+  //   if (uploadedFiles.length === 0) {
+  //     console.log("No files to upload");
+  //     return;
+  //   }
 
-    const formData = new FormData();
-    uploadedFiles.forEach((file) => {
-      formData.append("files", file);
-    });
+  //   const formData = new FormData();
+  //   uploadedFiles.forEach((file) => {
+  //     formData.append("files", file);
+  //   });
 
-    try {
-      const res = await fetch("http://localhost:5000/upload", {
-        method: "POST",
-        body: formData,
-      });
+  //   try {
+  //     const res = await fetch("http://localhost:5000/upload", {
+  //       method: "POST",
+  //       body: formData,
+  //     });
 
-      const data = await res.json();
-      console.log("Response from Python backend:", data); // 👈 Print result in console
-    } catch (err) {
-      console.error("Error uploading files:", err);
-    }
-  };
+  //     const data = await res.json();
+  //     console.log("Response from Python backend:", data); // 👈 Print result in console
+  //   } catch (err) {
+  //     console.error("Error uploading files:", err);
+  //   }
+  // };
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#f8f9fa" }}>
@@ -95,7 +95,7 @@ const DiagramSelection = () => {
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="ms-auto">
               <Nav.Link href="#features">Features</Nav.Link>
-              <Nav.Link href="#import">Import</Nav.Link>
+              {/* <Nav.Link href="#import">Import</Nav.Link> */}
               <Nav.Link href="#">About</Nav.Link>
             </Nav>
           </Navbar.Collapse>
@@ -130,7 +130,7 @@ const DiagramSelection = () => {
           </div>
         </section>
 
-        {/* File Import Section */}
+        {/* File Import Section
         <section id="import" className="mb-5 p-4 bg-white rounded-3 shadow-sm">
           <h3 className="h4 fw-bold mb-4">
             <FaFileImport className="me-2" />
@@ -202,17 +202,17 @@ const DiagramSelection = () => {
               </div>
 
               {/* Send to backend button */}
-              <div className="mt-4 text-center">
+              {/* <div className="mt-4 text-center">
                 <Button variant="success" onClick={sendFilesToBackend}>
                   Send to Backend
                 </Button>
-              </div>
-            </div>
+              </div> */}
+            {/* </div>
           )}
-        </section>
+        </section> */} 
 
         {/* Features Section */}
-        <section id="features" className="p-4 bg-white rounded-3 shadow-sm">
+        {/* <section id="features" className="p-4 bg-white rounded-3 shadow-sm">
           <h3 className="h4 fw-bold mb-4">Key Features</h3>
           <Row className="g-4">
             <Col md={4}>
@@ -237,7 +237,7 @@ const DiagramSelection = () => {
               />
             </Col>
           </Row>
-        </section>
+        </section> */}
 
         {/* Back to Home Button */}
         <div className="text-center mt-4">

@@ -65,19 +65,19 @@ const Home = () => {
             <Col xs={12} md={6} lg={4}>
               <Card style={{ border: "none", borderRadius: "10px", boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)", height: "100%" }}>
                 <Card.Body className="text-center">
-                  <h4>🎨 Easy Drag & Drop</h4>
-                  <p>Intuitive drag-and-drop functionality for seamless diagram creation.</p>
+                  <h4>Support multiple diagrams</h4>
+                  <p>Can create Class, Sequence, State and Activity Diagram</p>
                 </Card.Body>
               </Card>
             </Col>
-            <Col xs={12} md={6} lg={4}>
+            {/* <Col xs={12} md={6} lg={4}>
               <Card style={{ border: "none", borderRadius: "10px", boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)", height: "100%" }}>
                 <Card.Body className="text-center">
-                  <h4>🔗 Import & Export</h4>
+                  <h4>Real-Time UML-to-Pseudocode Generation</h4>
                   <p>Import diagrams and export pseudocode with ease.</p>
                 </Card.Body>
               </Card>
-            </Col>
+            </Col> */}
           </Row>
         </Container>
       </section>
@@ -98,7 +98,7 @@ const Home = () => {
             <Col xs={12} md={6} lg={4}>
               <Card style={{ border: "none", borderRadius: "10px", boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)", height: "100%" }}>
                 <Card.Body className="text-center">
-                  <p>"A must-have for software engineers!"</p>
+                  <p>"A must-have for computing students!"</p>
                   <strong>- Warly France Jaculan</strong>
                 </Card.Body>
               </Card>

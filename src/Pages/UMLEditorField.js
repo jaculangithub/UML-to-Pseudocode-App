@@ -971,13 +971,15 @@ export default function UMLEditorField() {
         {/* Color Mode Toggle */}
         <button
           onClick={toggleColorMode}
+          disabled
           style={{
             padding: '6px 12px',
             background: colorMode === 'dark' ? '#4a5568' : '#FFF',
             color: colorMode === 'dark' ? 'white' : 'black',
             border: '1px solid #ccc',
             borderRadius: '6px',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            opacity: 0,
           }}
         >
           {colorMode === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode'}
