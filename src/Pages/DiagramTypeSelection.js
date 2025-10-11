@@ -95,7 +95,7 @@ const DiagramSelection = () => {
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="ms-auto">
               <Nav.Link href="#features">Features</Nav.Link>
-              <Nav.Link href="#import">Import</Nav.Link>
+              {/* <Nav.Link href="#import">Import</Nav.Link> */}
               <Nav.Link href="#">About</Nav.Link>
             </Nav>
           </Navbar.Collapse>
@@ -130,7 +130,7 @@ const DiagramSelection = () => {
           </div>
         </section>
 
-        File Import Section
+        {/* File Import Section
         <section id="import" className="mb-5 p-4 bg-white rounded-3 shadow-sm">
           <h3 className="h4 fw-bold mb-4">
             <FaFileImport className="me-2" />
@@ -202,14 +202,14 @@ const DiagramSelection = () => {
               </div>
 
               {/* Send to backend button */}
-              <div className="mt-4 text-center">
+              {/* <div className="mt-4 text-center">
                 <Button variant="success" onClick={sendFilesToBackend}>
                   Send to Backend
                 </Button>
-              </div>
-            </div>
+              </div> */}
+            {/* </div>
           )}
-        </section>
+        </section> */} 
 
         {/* Features Section */}
         {/* <section id="features" className="p-4 bg-white rounded-3 shadow-sm">
