@@ -1,15 +1,36 @@
 import { memo, useEffect } from 'react';
 import { NodeResizer }  from '@xyflow/react';
+import { useState } from 'react';
 
 const ObjectNode = ({ id, selected, data }) => {
   
+  const [objName, setObjName] = useState(data.objName);
+  const [inputValue, setInputValue] = useState(`Object`);
+  const [debounceTimer, setDebounceTimer] = useState(null);
+
+
+  const handleObjectNameChange = (e) => {
+    const newValue = e.target.value;
+    setInputValue(newValue);
+
+    if(debounceTimer){
+      clearTimeout(debounceTimer);
+    }
+
+    setDebounceTimer(
+      setTimeout(() => {
+        setObjName(newValue? newValue : "");
+      }, 1000)
+    )
+  }
+
+
   useEffect(() => {
-    data.actorName = `Object ${id}`
+    data.objectName = objName
   })
   
   return (
     <div
-     
       style={{
         width: '100%',
         height: '100%',
@@ -22,7 +43,7 @@ const ObjectNode = ({ id, selected, data }) => {
       <div
         className = "drag-handle__label"
         style={{
-            maxHeight: "200px",
+            maxHeight: "300px",
             width: "100%",
             display: "flex",
             justifyContent: "center",
@@ -30,7 +51,21 @@ const ObjectNode = ({ id, selected, data }) => {
             padding: '2px 2px',
         }}
       >
-        Object
+        <input 
+          type="text"
+          value={data.actorName}
+          onChange={handleObjectNameChange}
+          placeholder= "Object"
+          style={{
+            border: `none`,
+            background: `transparent`,
+            outline: `none`,
+            textAlign: `center`,
+            width: `90%`,
+            backgroundColor: "white"
+          }}
+        />
+
       </div>
 
       {/* Vertical dashed line */}

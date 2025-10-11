@@ -11,6 +11,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useParams } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 import { set, throttle } from 'lodash'
 import {ActivityDiagram1, ActivityDiagram, SequenceDiagram, StateDiagram, ClassDiagram} from "./GeneratePseudocode";
 
@@ -79,6 +80,7 @@ const edgeTypes = {
 }
 
 export default function UMLEditorField() {
+  const navigate = useNavigate();
   const { type: diagramType } = useParams(); // Get the type from URL parameters
   // const diagramType = type || "activity"; //activity, class, sequence state
   const [numberOfLane, setNumberOfLane] = useState(2);
@@ -396,7 +398,7 @@ export default function UMLEditorField() {
     } else if(diagramType === 'class'){
       return reStructureClassDiagram(nodes, edges); 
     }else if(diagramType === 'sequence'){
-      return reStructureSequenceDiagram(edges);
+      return reStructureSequenceDiagram(edges, nodes);
     }else if(diagramType === 'state'){
       return reStructureStateDiagram(nodes, edges);
     }
@@ -515,31 +517,41 @@ export default function UMLEditorField() {
     // return enhancedNodes;
   
   };
+
   const reStructureSequenceDiagram = (edges) => {
     console.log("Initial Nodessss: ", nodes) 
-    console.log("Restructiasdndasdas")
-    let loopNodes = [];
-    let conditionNodes = [];
-    //get loop nad conditional nodes
+    // console.log("Restructiasdndasdas")
+    let conditionalNodes = [];
+
+    // Collect LoopNode and ConditionNode
     nodes.forEach(node => {
-      if (node.type === "LoopNode") {
-        loopNodes.push(node);
-      } else if (node.type === "ConditionNode") {
-        conditionNodes.push(node);
+      if (node.type === "LoopNode" || node.type === "ConditionNode") {
+        conditionalNodes.push(node);
       }
-    });  
-    
+    });
+
+    // Sort by Y axis first, then by X axis
+    conditionalNodes.sort((a, b) => {
+      const yDiff = a.position.y - b.position.y;
+      if (yDiff !== 0) return yDiff;
+
+      // If y is the same, compare x
+      return a.position.x - b.position.x;
+    });
+
+    // console.log("Sorted conditional nodes:", conditionalNodes);
+ 
     const getActor = (nodeId) => {
       const activationBar = nodes.find(node => node.id === nodeId);
       const parent = nodes.find(node => node.id === activationBar.parentId);
-      return parent?.data?.actorName;
+      return parent?.data?.actorName || parent?.data?.objectName || null;
     }
 
     const edgesCopy = edges.map(edge => {
       // Create a clean copy of the edge
       console.log(edge.source, "source -  targte ", edge.target)
       const edgeCopy = {
-        ...edge,
+        ...edge, 
         data: { 
           ...edge.data,
           source: getActor(edge.source),
@@ -549,38 +561,6 @@ export default function UMLEditorField() {
         } // Clone data object
       };
 
-      // Get edge coordinates (with fallbacks)
-      const startPosX = edge.data.sourceX || 0;
-      const startPosY = edge.data.sourceY || 0;
-      const targetPosX = edge.data.targetX || 0;
-      const targetPosY = edge.data.targetY || 0;
-
-      // Check loop node containment
-      edgeCopy.data.loopNodeId = loopNodes.find(node => {
-        const nodeRight = node.position.x + node.width;
-        const nodeBottom = node.position.y + node.height;
-        
-        return (
-          node.position.x <= Math.min(startPosX, targetPosX) &&
-          nodeRight >= Math.max(startPosX, targetPosX) &&
-          node.position.y <= Math.min(startPosY, targetPosY) &&
-          nodeBottom >= Math.max(startPosY, targetPosY)
-        );
-      })?.id || null;
-
-      // Check condition node containment
-      edgeCopy.data.conditionNodeId = conditionNodes.find(node => {
-        const nodeRight = node.position.x + node.width;
-        const nodeBottom = node.position.y + node.height;
-        
-        return (
-          node.position.x <= Math.min(startPosX, targetPosX) &&
-          nodeRight >= Math.max(startPosX, targetPosX) &&
-          node.position.y <= Math.min(startPosY, targetPosY) &&
-          nodeBottom >= Math.max(startPosY, targetPosY)
-        );
-      })?.id || null;
-      // console.log("edgesss: ", edgeCopy)
       return edgeCopy;
     });
 
@@ -594,15 +574,10 @@ export default function UMLEditorField() {
       return a.data.sourceX - b.data.sourceX;
     });
 
-    // console.log(edgesCopy, "Loop Width", loopNodes[0].width, "Loop Height: ", loopNodes[0].height, conditionNodes)
-    console.log("edges copy", edgesCopy)
+    // console.log("edges copy", edgesCopy)
 
-    let sourceNode = nodes.find(n => n.id === edgesCopy[0].source)
-    let parent = sourceNode.parentId
+    setStructuredData([edgesCopy, conditionalNodes]);
 
-    console.log("Parent", parent)
-    console.log("Ndoes", nodes) 
-    setStructuredData(edgesCopy);
   };
 
   const reStructureClassDiagram = (nodes, edges) => {
@@ -711,7 +686,7 @@ export default function UMLEditorField() {
       style={{
         width: '100vw',
         height: '100vh',
-        position: 'realtive',
+        position: 'relative',
         backgroundColor: colorMode === 'dark' ? '#1a202c' : 'white'
       }}
     >
@@ -760,6 +735,7 @@ export default function UMLEditorField() {
 
       </ReactFlow>
 
+
       {/* Menu Tab */}
       <div
         style={{
@@ -774,53 +750,56 @@ export default function UMLEditorField() {
           justifyContent: 'center',
           alignItems: 'center',
           gap: '10px',
-          zIndex: '1000'
+          zIndex: '1000',
+          fontFamily: "'Segoe UI', Arial, sans-serif",
+          fontSize: '13px'
         }}
       > 
-        {/* generate psuedocode */}
+        {/* Go back to diagram selection button */}
+      <button
+        onClick={() => navigate("/select-diagram")}
+        style={{
+          position: 'absolute',
+          left: '10px',
+          padding: '6px 12px',
+          background: colorMode === 'dark' ? '#4A5568' : '#FFF',
+          border: '1px solid #ccc',
+          borderRadius: '6px',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          fontFamily: "'Segoe UI', Arial, sans-serif",
+        }}
+      >
+        ← Back
+      </button>
+
+
+        {/* Generate pseudocode */}
         <button 
           onClick={() => {
-            console.log("GEnrasa")
-            restructureData(nodes, edges)
+            restructureData(nodes, edges);
             setShowPseudocode(true);
           }}
+          style={{
+            padding: '6px 12px',
+            background: colorMode === 'dark' ? '#4A5568' : '#FFF',
+            border: '1px solid #ccc',
+            borderRadius: '6px',
+            cursor: 'pointer'
+          }}
         >
-          Generate 
+          Generate
         </button>
 
-        {/* Undo/Redo Buttons */}
-        <div style={{ display: 'flex', gap: '5px' }}>
-          <button
-            style={{
-              padding: '6px 12px',
-              backgroundColor: colorMode === 'dark' ? '#4A5568' : '#E2E8F0',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            Undo
-          </button>
-          <button
-            style={{
-              padding: '6px 12px',
-              backgroundColor: colorMode === 'dark' ? '#4A5568' : '#E2E8F0',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            Redo
-          </button>
-        </div>
-
         {/* Font Style Dropdown */}
-        <select
+        {/* <select
           style={{
-            padding: '6px',
-            backgroundColor: colorMode === 'dark' ? '#4A5568' : '#E2E8F0',
-            border: 'none',
-            borderRadius: '4px',
+            padding: '6px 10px',
+            backgroundColor: colorMode === 'dark' ? '#4A5568' : '#FFF',
+            border: '1px solid #ccc',
+            borderRadius: '6px',
             cursor: 'pointer'
           }}
         >
@@ -828,15 +807,15 @@ export default function UMLEditorField() {
           <option value="times">Times New Roman</option>
           <option value="courier">Courier New</option>
           <option value="verdana">Verdana</option>
-        </select>
+        </select> */}
 
         {/* Font Size Dropdown */}
-        <select
+        {/* <select
           style={{
-            padding: '6px',
-            backgroundColor: colorMode === 'dark' ? '#4A5568' : '#E2E8F0',
-            border: 'none',
-            borderRadius: '4px',
+            padding: '6px 10px',
+            backgroundColor: colorMode === 'dark' ? '#4A5568' : '#FFF',
+            border: '1px solid #ccc',
+            borderRadius: '6px',
             cursor: 'pointer'
           }}
         >
@@ -846,83 +825,61 @@ export default function UMLEditorField() {
           <option value="16">16px</option>
           <option value="18">18px</option>
           <option value="24">24px</option>
-        </select>
+        </select> */}
 
-        {/* setting dashline or line*/}
+        {/* Line & Dashline Dropdown */}
         <select
-          value={selectedEdge?.data?.lineStyle || "line"}  // Controlled value
+          value={selectedEdge?.data?.lineStyle || "line"}
           onChange={(e) => {
             setEdges(eds => eds.map(edge => {
               if (edge.id === selectedEdge?.id) {
                 const updatedEdge = {
                   ...edge,
-                  data: {
-                    ...edge.data,
-                    lineStyle: e.target.value,
-                  }
+                  data: { ...edge.data, lineStyle: e.target.value },
                 };
                 setSelectedEdge(updatedEdge);
-                return updatedEdge
+                return updatedEdge;
               }
               return edge;
             }));
           }}
           style={{
-            padding: '6px',
-            backgroundColor: colorMode === 'dark' ? '#4A5568' : '#E2E8F0',
-            border: 'none',
-            borderRadius: '4px',
+            padding: '6px 10px',
+            backgroundColor: colorMode === 'dark' ? '#4A5568' : '#FFF',
+            border: '1px solid #ccc',
+            borderRadius: '6px',
             cursor: 'pointer'
           }}
         >
-          <option value="line">line</option>
-          <option value="dashLine">dash line</option>
+          <option value="line">Line ─</option>
+          <option value="dashLine">Dash ┄</option>
         </select>
 
-        {/* Marker Type Selection */}
+        {/* Marker Selection */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-          
-          {/* Start symbol select */}
+          {/* Start Symbol Dropdown (disabled) */}
           <select
-            value={selectedEdge?.data?.startSymbol || "none"}  // Controlled value
-            onChange={(e) => {
-              setEdges(eds => eds.map(edge => {
-                if (edge.id === selectedEdge?.id) {
-                  const updatedEdge = {
-                    ...edge,
-                    data: {
-                      ...edge.data,
-                      startSymbol: e.target.value,
-                    }
-                  };
-
-                  setSelectedEdge(updatedEdge);
-                  return updatedEdge
-                }
-                return edge;
-              }));
-            }}
+            value={selectedEdge?.data?.startSymbol || "none"}
+            disabled
             style={{
-              padding: '6px',
-              backgroundColor: colorMode === 'dark' ? '#4A5568' : '#E2E8F0',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
+              padding: '6px 10px',
+              backgroundColor: colorMode === 'dark' ? '#4A5568' : '#FFF',
+              border: '1px solid #ccc',
+              borderRadius: '6px',
+              cursor: 'not-allowed',
+              opacity: '0.6'
             }}
           >
             {markerTypes.map((type, index) => (
-              <option key={index} value={type.toLowerCase()}>
-                {type}
-              </option>
+              <option key={index} value={type.toLowerCase()}>{type}</option>
             ))}
           </select>
 
-          {/* Switch button */}
+          {/* Switch Button */}
           <button
             onClick={() => {
               setEdges(eds => eds.map(edge => {
                 if (edge.id === selectedEdge?.id) {
-                  // Create the updated edge first
                   const updatedEdge = {
                     ...edge,
                     target: edge.source,
@@ -935,98 +892,80 @@ export default function UMLEditorField() {
                       targetHandle: edge.sourceHandle,
                     }
                   };
-                  
-                  // Update the selectedEdge reference
                   setSelectedEdge(updatedEdge);
-                  
                   return updatedEdge;
                 }
                 return edge;
               }));
             }}
-            style ={{
-              borderColor: 'none',
-            }}
+            style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}
           >
-            <img 
-              src={SwitchArrow} 
-              alt="Switch"
-              style={{
-                width: '22px',
-                height: '22px',
-                borderColor: 'green',
-              }}
-            />
+            <img src={SwitchArrow} alt="Switch" style={{ width: '22px', height: '22px' }} />
           </button>
 
-          {/* End symbol select */}
+          {/* End Symbol Dropdown */}
           <select
-            value={selectedEdge?.data?.endSymbol || "none"}  // Controlled value
+            value={selectedEdge?.data?.endSymbol || "none"}
             onChange={(e) => {
               setEdges(eds => eds.map(edge => {
                 if (edge.id === selectedEdge?.id) {
-                  const updatedEdge = {
-                    ...edge,
-                    data: {
-                      ...edge.data,
-                      endSymbol: e.target.value,
-                    }
-                  };
-
+                  const updatedEdge = { ...edge, data: { ...edge.data, endSymbol: e.target.value } };
                   setSelectedEdge(updatedEdge);
-                  return updatedEdge
+                  return updatedEdge;
                 }
                 return edge;
               }));
             }}
             style={{
-              padding: '6px',
-              backgroundColor: colorMode === 'dark' ? '#4A5568' : '#E2E8F0',
-              border: 'none',
-              borderRadius: '4px',
+              padding: '6px 10px',
+              backgroundColor: colorMode === 'dark' ? '#4A5568' : '#FFF',
+              border: '1px solid #ccc',
+              borderRadius: '6px',
               cursor: 'pointer'
             }}
           >
             {markerTypes.map((type, index) => (
-              <option key={index} value={type.toLowerCase()}>
-                {type}
-              </option>
+              <option key={index} value={type.toLowerCase()}>{type}</option>
             ))}
           </select>
-          
         </div>
 
+
+        {/* Lane Selector (only for Activity diagram) */}
         {diagramType === "activity" && (
           <select 
             onChange={handleLaneChange}
-            style ={{
-                padding: '6px',
-                backgroundColor: colorMode === 'dark' ? '#4A5568' : '#E2E8F0',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
+            style={{
+              padding: '6px 10px',
+              backgroundColor: colorMode === 'dark' ? '#4A5568' : '#FFF',
+              border: '1px solid #ccc',
+              borderRadius: '6px',
+              cursor: 'pointer'
             }}
           >
-            <option value = {2} >2 Lane </option>
-            <option value = {3} >3 Lane </option>
-            <option value = {4} >4 Lane </option>
-            <option value = {5} >5 Lane </option>
-
+            <option value={2}>2 Lane</option>
+            <option value={3}>3 Lane</option>
+            <option value={4}>4 Lane</option>
+            <option value={5}>5 Lane</option>
           </select>
         )}
 
+        {/* Delete Button (Icon) */}
         <button
-        onClick={onDelete}
+          onClick={onDelete}
           style={{
             padding: '6px 12px',
-            background: colorMode === 'dark' ? '#4a5568' : '#e2e8f0',
-            color: colorMode === 'dark' ? 'white' : 'black',
-            border: 'none', 
-            borderRadius: '4px',
+            background: '#ff4d4f',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '6px',
             cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
           }}
-          >
-          delete
+        >
+          🗑 Delete
         </button>
 
         {/* Color Mode Toggle */}
@@ -1034,19 +973,19 @@ export default function UMLEditorField() {
           onClick={toggleColorMode}
           style={{
             padding: '6px 12px',
-            background: colorMode === 'dark' ? '#4a5568' : '#e2e8f0',
+            background: colorMode === 'dark' ? '#4a5568' : '#FFF',
             color: colorMode === 'dark' ? 'white' : 'black',
-            border: 'none', 
-            borderRadius: '4px',
-            cursor: 'pointer',
-            marginRight: '10px',
+            border: '1px solid #ccc',
+            borderRadius: '6px',
+            cursor: 'pointer'
           }}
         >
           {colorMode === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode'}
         </button>
 
       </div>
-        
+
+
       {/* Node creation buttons */}
       <div
         style={{
@@ -1158,8 +1097,9 @@ export default function UMLEditorField() {
         <div
           style={{
             position: 'fixed',
-            top: '50%',
-            left: '50%',
+            top: '20%',
+            right: '10px', // ✅ Attach to the right side
+            transform: 'translateY(-50%)', // ✅ Only center vertically
             width: '400px',
             maxWidth: '80vh',
             maxHeight: '400px',
@@ -1168,10 +1108,10 @@ export default function UMLEditorField() {
             padding: '15px',
             borderRadius: '8px',
             boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-            transform: 'translate(-50%, -50%)', // Centers perfectly
             zIndex: 1000,
             border: colorMode === 'dark' ? '1px solid #4A5568' : '1px solid #E2E8F0'
           }}
+
         >
           <div style={{
             display: 'flex',
@@ -1196,7 +1136,7 @@ export default function UMLEditorField() {
           </div>
           {diagramType === "activity" && <ActivityDiagram nodes={structuredData} />}
           {diagramType === 'class' && <ClassDiagram nodes={structuredData}/> }
-          {diagramType === 'sequence' && <SequenceDiagram edges = {structuredData} nodes = {nodes} />}
+          {diagramType === 'sequence' && <SequenceDiagram edges = {structuredData[0]} nodes = {structuredData[1]} />}
           {diagramType === 'state' && <StateDiagram nodes = {structuredData} />}
 
         </div>

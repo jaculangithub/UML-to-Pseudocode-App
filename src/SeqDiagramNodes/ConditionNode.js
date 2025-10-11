@@ -1,7 +1,45 @@
-import { memo } from "react"
+import { memo, useEffect, useState } from "react"
 import { NodeResizer } from "@xyflow/react"
+import { data } from "react-router-dom"
 
 const ConditionNode = ({ selected }) => {
+
+    const [ifConditition, setIfCondition] = useState("If Condition")
+    const [elseCondition, setElseCondition] = useState("Else Condition")
+    const [inputIfValue, setIfInputValue] = useState(`If Condition`)
+    const [inputElseValue, setElseInputValue] = useState(`Else Condition`)
+    const [debounceTimer, setDebounceTimer] = useState(null)
+
+    useEffect(() => {
+
+        data.ifCondition = ifConditition
+        data.elseCondition = elseCondition
+
+    })
+
+    const handleLabelChange = (e, condition) => {
+        const newValue = e.target.value;
+        if(condition === "if"){
+            setIfInputValue(newValue);
+        }else {
+            setElseInputValue(newValue);
+        }
+       
+        if(debounceTimer){
+            clearTimeout(debounceTimer);
+        }
+
+        setDebounceTimer(
+            setTimeout(() => {
+                if(condition === "if"){
+                    setIfCondition(newValue? newValue : "");
+                }else{
+                    setElseCondition(newValue? newValue : "");
+                }
+            }, 1000)
+        )
+    }
+
     return (
         <div
             style={{
@@ -39,14 +77,30 @@ const ConditionNode = ({ selected }) => {
                     alignItems: "center",
                 }}
             >
-                <span style={{ 
+                <input
+                    type = "text"
+                    placeholder="If Condition"
+                    value={inputIfValue}
+                    onChange={(e) => handleLabelChange(e, "if")}
+                    style={{ 
+                        margin: 0, 
+                        outline: "none",
+                        border: 'none',
+                        background: 'transparent',
+                        width: '200px',
+                        fontSize: '24px',
+                    }}>
+
+                </input>
+                
+                {/* <span style={{ 
                     backgroundColor: "#666", 
                     color: "white",
                     padding: "4px 8px",
                     borderRadius: "4px",
                 }}>
                     [If]
-                </span>
+                </span> */}
             </div>
 
             {/* Else Content */}
@@ -58,14 +112,30 @@ const ConditionNode = ({ selected }) => {
                     alignItems: "center",
                 }}
             >
-                <span style={{ 
+                {/* <span style={{ 
                     backgroundColor: "#666", 
                     color: "white",
                     padding: "4px 8px",
                     borderRadius: "4px",
                 }}>
                     [Else]
-                </span>
+                </span> */}
+                <input
+                    type = "text"
+                    placeholder="Else Condition"
+                    value={inputElseValue}
+                    onChange={(e) => handleLabelChange(e, "else")}
+                    style={{ 
+                        margin: 0, 
+                        outline: "none",
+                        border: 'none',
+                        background: 'transparent',
+                        width: '200px',
+                        fontSize: '24px',
+                    }}>
+
+                </input>
+            
             </div>
 
             <NodeResizer

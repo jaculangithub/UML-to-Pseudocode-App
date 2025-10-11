@@ -11,7 +11,6 @@ export function ActivityDiagram( {nodes} ){
     return "" //empty diagram
   }
   
-
   // adding new line
   function addLine(text) {
     if (pseudocode.length > 0) {
@@ -87,7 +86,7 @@ export function ActivityDiagram( {nodes} ){
         }
         
         if(allSourceVisited){
-          // console.log(`All node that go to ${node.id} is visited`)
+          
           addLine("//PARALLEL Execution End")
           visited.add(node.id)
           break; //assuming all of its source node/s is visited, go to the next nodes after the join node
@@ -104,9 +103,9 @@ export function ActivityDiagram( {nodes} ){
     if(node.targets && node.type !== "DecisionNode"){
       for(const target of node.targets) {
         const targetNode = nodes.find(n => n.id === target.nodeId);
-        // console.log("Target: ", targetNode.id)
+      
         dfs(targetNode);
-        // console.log("back to ", targetNode.id, "Type ", targetNode.type, " ", targetNode.data?.label)
+       
       }
     }
 
@@ -146,6 +145,7 @@ export function ActivityDiagram( {nodes} ){
 }
 
 export function StateDiagram( {nodes} ){
+  console.log(nodes)
   console.log("Start")
   const startTime = performance.now(); // ADDED
   let visited = new Set();
@@ -156,7 +156,6 @@ export function StateDiagram( {nodes} ){
   if(!nodes || nodes.length === 0){
     return "" //empty diagram
   }
-
   // adding new line
   function addLine(text) {
     if (pseudocode.length > 0) {
@@ -168,36 +167,72 @@ export function StateDiagram( {nodes} ){
   function dfs(node){
     console.log("Current Node: ", node.id, "Node type: ", node.type)
     if(!node || visited.has(node.id)){
-      // if(node.type === "ActionNode"){
-      //   addLine(`State: ${node.data?.label}`)
-      // }
-      // console.log("Node: ", node.id)
       return;
     }
-
+    if(node.type !== "StateNode"){
+      visited.add(node.id);
+    }
     //rules 
     switch (node.type)  {
-      case "StartNode":
-        addLine("BEGIN");
-        indentLevel++;
+      case "StartNode":     
+        if(node.targets && node.targets.length > 0){
+          if(node.targets.length === 1){
+            indentLevel++;
+            const targetId = node.targets[0].nodeId;
+            addLine(`Initial State = ${nodes.find(node => node.id === targetId)?.data.label}`)
+            addLine(`while running do`)
+            indentLevel++;
+            dfs(nodes.find(node => node.id === targetId));
+            
+          }
+          else{
+            addLine(`//Invalid Diagram. Start Node has multiple targets, please check the diagram.`)
+            return;
+          }
+        }
+
         break;
       
       case "StateNode": 
+        addLine(`IF STATE = ${node.data?.label} THEN`)
+        visited.add(node.id);
+        if(node.targets){
+           indentLevel++;
+          for(const target of node.targets) {
+            const targetNode = nodes.find(n => n.id === target.nodeId);
+            //print transition  
+            if(node.type !== "StartNode"){  
+              addLine(`IF event = ${target.middleLabel} THEN`)
+              indentLevel++;
+              addLine(`state = ${targetNode.data.label}`)
+              dfs(targetNode);
+            }else{
+            
+              dfs(targetNode);
+            }
+            indentLevel--;
+          } 
+          addLine(`END IF`) 
+
+        }
+        
+        indentLevel--;
+        addLine(`END IF`)
         break;
 
       case "CompositeStateNode":
-        addLine(`Composite State: ${node.data?.label}`)
+        addLine(`IF State: ${node.data?.label} //Composite State Start`)
         indentLevel++;
-        // console.log("Substate data: ", node.data?.substate)
+      
         const strt = node.data?.substate?.find(n => n.type === "StartNode");
-        // console.log("Substate", strt?.id)
+       
         const strtNode = nodes.find(n => n.id === strt?.id);
-        // console.log("Strt Node: ", strtNode)
+       
         if(strtNode){
           dfs(strtNode);
         }  
        indentLevel--; 
-        addLine("Composite State End")
+        addLine(`Composite State ${node.data?.label} End`)
         break;
       
       case "EndNode":
@@ -208,26 +243,14 @@ export function StateDiagram( {nodes} ){
         addLine("Undefined node type");
         break;
     }
-
-    if(node.targets){
-      for(const target of node.targets) {
-        const targetNode = nodes.find(n => n.id === target.nodeId);
-
-        //print transition
-        if(node.type !== "StartNode"){
-          addLine(`${node.data.label}--[${target.middleLabel? target.middleLabel: " "}]-->${targetNode.data.label}`)
-        }
-        dfs(targetNode);
-      }
-    }
   }
 
-  //findding initial/start node
+  //finding initial/start node
   const startNode = nodes.find(node => node.type === "StartNode");
 
   if(startNode){
+    addLine("START");
     dfs(startNode);
-
     if(hasEndNode){
       indentLevel = 0;
       addLine("END");
@@ -255,98 +278,901 @@ export function StateDiagram( {nodes} ){
 
 }
 
-export function SequenceDiagram({edges}) {
+// export function SequenceDiagram({edges, nodes}) {
 
-  // console.log("GEn. ", edges)
-  const startTime = performance.now(); // ADDED
+//   const startTime = performance.now(); // ADDED
+//   let pseudocode = "";
+//   let indentLevel = 0;
+
+//   function addLine(text) {
+//     if (pseudocode.length > 0) {
+//       pseudocode += "\n";
+//     }
+
+//     pseudocode += "  ".repeat(indentLevel) + text;
+//   }
+
+//   function message(edgeData) {
+//     let messageType = ""
+
+//     if(edgeData.endSymbol === "closed arrow"){
+//       if(edgeData.middleLabel.includes("<<create>>")){  
+//         addLine(`${edgeData.source} cresaates ${edgeData.target}`)
+//         messageType = "create message"; // create message
+//       }
+//       else if(edgeData.targetNodeType === "ShadedCircle"){
+//         addLine(`${edgeData.source} ${edgeData.middleLabel} to External Entity`)
+//         messageType = "lost message" //Lost message
+//       }else if(edgeData.sourceNodeType === "ShadedCircle"){
+//         addLine(`External Entity ${edgeData.middleLabel} ${edgeData.target}`)
+//         messageType = "found message" //found message
+//       }else if(edgeData.targetNodeType === "DestroyMessage"){
+//         addLine(`${edgeData.source} Destroys ${edgeData.target}`)
+//         messageType = "destroy message"; //destroy message
+//       }else if(edgeData.lineStyle === "line"){
+//         addLine(`${edgeData.source} ${edgeData.middleLabel} ${edgeData.target}`)
+//         messageType = "synchronous"; //synchronous message
+//       } else {
+//         addLine("Unknown message type")
+//       }
+//     }else if (edgeData.endSymbol === "open arrow"){
+//       if(edgeData.source === edgeData.target){
+//         addLine(`${edgeData.source} will ${edgeData.middleLabel}`)
+//         messageType = "self message" //self message 
+//       }else if(edgeData.lineStyle === "line"){
+//         addLine(`${edgeData.source} ${edgeData.middleLabel} ${edgeData.target} //asynchronous`)
+//         messageType = "asynchronous" //asynch message
+//       }else if(edgeData.lineStyle === "dashLine"){
+//         addLine(`${edgeData.source} Replies: ${edgeData.middleLabel} to ${edgeData.target}`)
+//         messageType = "reply" //reply message 
+//       }else {
+//         addLine("Unknown message type")
+//       }
+//     } else {
+//       addLine("Unknown message type")
+//     }
+//   }
+
+//   let activeNodes = [];
+
+//   edges.forEach(edge => {
+//     // find enclosing nodes for this edge
+//     const enclosingNodes = nodes.filter(node => {
+//       return (
+//         edge.data.sourceX >= node.position.x &&
+//         edge.data.sourceX <= node.position.x + node.width &&
+//         edge.data.sourceY >= node.position.y &&
+//         edge.data.sourceY <= node.position.y + node.height
+//       );
+//     }).sort((a, b) => (a.width * a.height) - (b.width * b.height)); // outer to inner
+
+//     // close nodes that no longer apply
+//     while (
+//       activeNodes.length > 0 &&
+//       !enclosingNodes.includes(activeNodes[activeNodes.length - 1])
+//     ) {
+//       const closingNode = activeNodes.pop();
+//       addLine("  ".repeat(activeNodes.length) + `End${closingNode.type}`);
+//     }
+
+//     // open nodes that are new
+//     enclosingNodes.forEach((node, idx) => {
+//       if (!activeNodes.includes(node)) {
+//         addLine("  ".repeat(idx) + `${node.type} (${node.condition || "Condition"})`);
+//         activeNodes.push(node);
+//       }
+//     });
+
+   
+//     message(edge.data)
+//   });
+
+//   // close leftover nodes at end
+//   while (activeNodes.length > 0) {
+//     const closingNode = activeNodes.pop();
+//     addLine("  ".repeat(activeNodes.length) + `End${closingNode.type}`);
+//   }
+
+
+//   const endTime = performance.now(); // ADDED
+//   const executionTime = (endTime - startTime).toFixed(5); // ADDED
+//   console.log(`Algorithm executed in ${executionTime} milliseconds`); // ADDED
+
+//   return (
+//     <div className="sequence-pseudocode">
+//       <pre>
+//         {pseudocode}
+//       </pre>
+//     </div>
+//   );
+// }
+
+// export function SequenceDiagram({ edges, nodes }) {
+//   const startTime = performance.now();
+//   let pseudocode = "";
+//   let indentLevel = 0;
+
+//   function addLine(text) {
+//     if (pseudocode.length > 0) {
+//       pseudocode += "\n";
+//     }
+//     pseudocode += "  ".repeat(indentLevel) + text;
+//   }
+
+//   function message(edgeData) {
+//     let messageType = "";
+
+//     if (edgeData.endSymbol === "closed arrow") {
+//       if (edgeData.middleLabel.includes("<<create>>")) {
+//         addLine(`${edgeData.source} creates ${edgeData.target}`);
+//         messageType = "create message";
+//       } else if (edgeData.targetNodeType === "ShadedCircle") {
+//         addLine(`${edgeData.source} ${edgeData.middleLabel} to External Entity`);
+//         messageType = "lost message";
+//       } else if (edgeData.sourceNodeType === "ShadedCircle") {
+//         addLine(`External Entity ${edgeData.middleLabel} ${edgeData.target}`);
+//         messageType = "found message";
+//       } else if (edgeData.targetNodeType === "DestroyMessage") {
+//         addLine(`${edgeData.source} Destroys ${edgeData.target}`);
+//         messageType = "destroy message";
+//       } else if (edgeData.lineStyle === "line") {
+//         addLine(`${edgeData.source} ${edgeData.middleLabel} ${edgeData.target}`);
+//         messageType = "synchronous";
+//       } else {
+//         addLine("Unknown message type");
+//       }
+//     } else if (edgeData.endSymbol === "open arrow") {
+//       if (edgeData.source === edgeData.target) {
+//         addLine(`${edgeData.source} will ${edgeData.middleLabel}`);
+//         messageType = "self message";
+//       } else if (edgeData.lineStyle === "line") {
+//         addLine(`${edgeData.source} ${edgeData.middleLabel} ${edgeData.target} //asynchronous`);
+//         messageType = "asynchronous";
+//       } else if (edgeData.lineStyle === "dashLine") {
+//         addLine(`${edgeData.source} Replies: ${edgeData.middleLabel} to ${edgeData.target}`);
+//         messageType = "reply";
+//       } else {
+//         addLine("Unknown message type");
+//       }
+//     } else {
+//       addLine("Unknown message type");
+//     }
+//   }
+
+//   let activeNodes = [];
+  
+//   // Sort edges by vertical position
+//   const sortedEdges = [...edges].sort((a, b) => a.data.sourceY - b.data.sourceY);
+
+//   sortedEdges.forEach(edge => {
+//     // Find enclosing nodes for both source and target
+//     const sourceEnclosingNodes = nodes.filter(node => 
+//       edge.data.sourceX >= node.position.x &&
+//       edge.data.sourceX <= node.position.x + node.width &&
+//       edge.data.sourceY >= node.position.y &&
+//       edge.data.sourceY <= node.position.y + node.height
+//     );
+
+//     const targetEnclosingNodes = nodes.filter(node => 
+//       edge.data.targetX >= node.position.x &&
+//       edge.data.targetX <= node.position.x + node.width &&
+//       edge.data.targetY >= node.position.y &&
+//       edge.data.targetY <= node.position.y + node.height
+//     );
+
+//     // Combine and sort by Y position (lowest Y first = higher on screen)
+//     const allEnclosingNodes = [...new Set([...sourceEnclosingNodes, ...targetEnclosingNodes])];
+//     const enclosingNodes = allEnclosingNodes.sort((a, b) => a.position.y - b.position.y);
+
+//     // Close nodes that are no longer enclosing - but only from the top of the stack
+//     // We can only close the last opened node first (LIFO)
+//     while (activeNodes.length > 0) {
+//       const lastActiveNode = activeNodes[activeNodes.length - 1];
+//       if (!enclosingNodes.includes(lastActiveNode)) {
+//         // Close this node
+//         const closingNode = activeNodes.pop();
+//         indentLevel = activeNodes.length;
+//         if (closingNode.type !== "ActivationBar") {
+//           addLine(`End${closingNode.type}`);
+//         }
+//       } else {
+//         break;
+//       }
+//     }
+
+//     // Open new nodes (sorted by Y position - lowest first)
+//     enclosingNodes.forEach(node => {
+//       if (!activeNodes.includes(node)) {
+//         // We can only open nodes that are direct children of the current active node
+//         // Check if this node is properly nested within the current active structure
+//         indentLevel = activeNodes.length;
+        
+//         // Skip ActivationBar nodes for structural pseudocode
+//         if (node.type === "ActivationBar") {
+//           return;
+//         }
+        
+//         // Get condition from node.data
+//         const condition = node.data.condition || "condition";
+        
+//         if (node.type === "LoopNode") {
+//           addLine(`Loop while ${condition})`);
+//         } else if (node.type === "ConditionNode") {
+//           addLine(`If (${condition})`);
+//         } else {
+//           addLine(`${node.type} (${condition})`);
+//         }
+        
+//         activeNodes.push(node);
+//       }
+//     });
+
+//     // Set indent level and add message
+//     indentLevel = activeNodes.length;
+//     message(edge.data);
+//   });
+
+//   // Close remaining nodes in reverse order (LIFO)
+//   while (activeNodes.length > 0) {
+//     const closingNode = activeNodes.pop();
+//     indentLevel = activeNodes.length;
+    
+//     // Don't close ActivationBar nodes
+//     if (closingNode.type !== "ActivationBar") {
+//       addLine(`End${closingNode.type}`);
+//     }
+//   }
+
+//   const endTime = performance.now();
+//   const executionTime = (endTime - startTime).toFixed(5);
+//   console.log(`Algorithm executed in ${executionTime} milliseconds`);
+
+//   return (
+//     <div className="sequence-pseudocode">
+//       <pre>{pseudocode}</pre>
+//     </div>
+//   );
+// }
+
+// export function SequenceDiagram({ edges, nodes }) {
+//   const startTime = performance.now();
+//   let pseudocode = "";
+//   let indentLevel = 0;
+
+//   function addLine(text) {
+//     if (pseudocode.length > 0) {
+//       pseudocode += "\n";
+//     }
+//     pseudocode += "  ".repeat(indentLevel) + text;
+//   }
+
+//   function message(edgeData) {
+//     let messageType = "";
+
+//     if (edgeData.endSymbol === "closed arrow") {
+//       if (edgeData.middleLabel.includes("<<create>>")) {
+//         addLine(`${edgeData.source} creates ${edgeData.target}`);
+//         messageType = "create message";
+//       } else if (edgeData.targetNodeType === "ShadedCircle") {
+//         addLine(`${edgeData.source} ${edgeData.middleLabel} to External Entity`);
+//         messageType = "lost message";
+//       } else if (edgeData.sourceNodeType === "ShadedCircle") {
+//         addLine(`External Entity ${edgeData.middleLabel} ${edgeData.target}`);
+//         messageType = "found message";
+//       } else if (edgeData.targetNodeType === "DestroyMessage") {
+//         addLine(`${edgeData.source} Destroys ${edgeData.target}`);
+//         messageType = "destroy message";
+//       } else if (edgeData.lineStyle === "line") {
+//         addLine(`${edgeData.source} ${edgeData.middleLabel} ${edgeData.target}`);
+//         messageType = "synchronous";
+//       } else {
+//         addLine("Unknown message type");
+//       }
+//     } else if (edgeData.endSymbol === "open arrow") {
+//       if (edgeData.source === edgeData.target) {
+//         addLine(`${edgeData.source} will ${edgeData.middleLabel}`);
+//         messageType = "self message";
+//       } else if (edgeData.lineStyle === "line") {
+//         addLine(`${edgeData.source} ${edgeData.middleLabel} ${edgeData.target} //asynchronous`);
+//         messageType = "asynchronous";
+//       } else if (edgeData.lineStyle === "dashLine") {
+//         addLine(`${edgeData.source} Replies: ${edgeData.middleLabel} to ${edgeData.target}`);
+//         messageType = "reply";
+//       } else {
+//         addLine("Unknown message type");
+//       }
+//     } else {
+//       addLine("Unknown message type");
+//     }
+//   }
+
+//   let activeNodes = [];
+//   let currentConditionBranch = null; // Track current branch: "if" or "else"
+  
+//   // Sort edges by vertical position
+//   const sortedEdges = [...edges].sort((a, b) => a.data.sourceY - b.data.sourceY);
+
+//   sortedEdges.forEach(edge => {
+//     // Find enclosing nodes for both source and target
+//     const sourceEnclosingNodes = nodes.filter(node => 
+//       edge.data.sourceX >= node.position.x &&
+//       edge.data.sourceX <= node.position.x + node.width &&
+//       edge.data.sourceY >= node.position.y &&
+//       edge.data.sourceY <= node.position.y + node.height
+//     );
+
+//     const targetEnclosingNodes = nodes.filter(node => 
+//       edge.data.targetX >= node.position.x &&
+//       edge.data.targetX <= node.position.x + node.width &&
+//       edge.data.targetY >= node.position.y &&
+//       edge.data.targetY <= node.position.y + node.height
+//     );
+
+//     // Combine and sort by Y position (lowest Y first = higher on screen)
+//     const allEnclosingNodes = [...new Set([...sourceEnclosingNodes, ...targetEnclosingNodes])];
+//     const enclosingNodes = allEnclosingNodes.sort((a, b) => a.position.y - b.position.y);
+
+//     // Close nodes that are no longer enclosing
+//     while (activeNodes.length > 0) {
+//       const lastActiveNode = activeNodes[activeNodes.length - 1];
+//       if (!enclosingNodes.includes(lastActiveNode)) {
+//         const closingNode = activeNodes.pop();
+//         indentLevel = activeNodes.length;
+        
+//         if (closingNode.type !== "ActivationBar") {
+//           // Reset condition branch when closing a condition node
+//           if (closingNode.type === "ConditionNode") {
+//             currentConditionBranch = null;
+//           }
+//           addLine(`End${closingNode.type}`);
+//         }
+//       } else {
+//         break;
+//       }
+//     }
+
+//     // Open new nodes
+//     enclosingNodes.forEach(node => {
+//       if (!activeNodes.includes(node)) {
+//         indentLevel = activeNodes.length;
+        
+//         // Skip ActivationBar nodes for structural pseudocode
+//         if (node.type === "ActivationBar") {
+//           return;
+//         }
+        
+//         if (node.type === "LoopNode") {
+//           const condition = node.data.condition || "condition";
+//           addLine(`Loop while ${condition}`);
+//         } else if (node.type === "ConditionNode") {
+//           // For ConditionNode, detect which branch this edge belongs to using 60/40 split
+//           const conditionNode = node;
+//           const headerHeight = conditionNode.height * 0.1; // First 10% for header
+//           const ifAreaHeight = conditionNode.height * 0.5; // Next 50% for if area
+//           const elseAreaHeight = conditionNode.height * 0.4; // Remaining 40% for else area
+          
+//           const ifAreaStart = conditionNode.position.y + headerHeight;
+//           const ifAreaEnd = ifAreaStart + ifAreaHeight;
+//           const elseAreaStart = ifAreaEnd;
+//           const elseAreaEnd = elseAreaStart + elseAreaHeight;
+          
+//           // Check which area the edge falls into
+//           if (edge.data.sourceY >= ifAreaStart && edge.data.sourceY <= ifAreaEnd) {
+//             // In IF branch (50% of the area after header)
+//             const ifCondition = conditionNode.data.ifCondition || "condition";
+//             addLine(`If (${ifCondition})`);
+//             currentConditionBranch = "if";
+//           } else if (edge.data.sourceY >= elseAreaStart && edge.data.sourceY <= elseAreaEnd) {
+//             // In ELSE branch (40% of the area)
+//             const elseCondition = conditionNode.data.elseCondition || "condition";
+//             addLine(`Else (${elseCondition})`);
+//             currentConditionBranch = "else";
+//           } else {
+//             // Default to if if we can't determine
+//             const ifCondition = conditionNode.data.ifCondition || "condition";
+//             addLine(`If (${ifCondition})`);
+//             currentConditionBranch = "if";
+//           }
+//         } else {
+//           const condition = node.data.condition || "condition";
+//           addLine(`${node.type} (${condition})`);
+//         }
+        
+//         activeNodes.push(node);
+//       }
+//     });
+
+//     // Set indent level and add message
+//     indentLevel = activeNodes.length;
+//     message(edge.data);
+//   });
+
+//   // Close remaining nodes
+//   while (activeNodes.length > 0) {
+//     const closingNode = activeNodes.pop();
+//     indentLevel = activeNodes.length;
+    
+//     if (closingNode.type !== "ActivationBar") {
+//       // Reset condition branch when closing a condition node
+//       if (closingNode.type === "ConditionNode") {
+//         currentConditionBranch = null;
+//       }
+//       addLine(`End${closingNode.type}`);
+//     }
+//   }
+
+//   const endTime = performance.now();
+//   const executionTime = (endTime - startTime).toFixed(5);
+//   console.log(`Algorithm executed in ${executionTime} milliseconds`);
+
+//   return (
+//     <div className="sequence-pseudocode">
+//       <pre>{pseudocode}</pre>
+//     </div>
+//   );
+// }
+
+export function SequenceDiagram({ edges, nodes }) {
+  const startTime = performance.now();
   let pseudocode = "";
-  let inLoop = false;
   let indentLevel = 0;
-
 
   function addLine(text) {
     if (pseudocode.length > 0) {
       pseudocode += "\n";
     }
-    pseudocode += text;
+    pseudocode += "  ".repeat(indentLevel) + text;
   }
 
   function message(edgeData) {
-    let messageType = ""
+    let messageType = "";
 
-    if(edgeData.endSymbol === "closed arrow"){
-      if(edgeData.middleLabel.includes("<<create>>")){  
-        addLine(`${edgeData.source} cresaates ${edgeData.target}`)
-        messageType = "create message"; // create message
-      }
-      else if(edgeData.targetNodeType === "ShadedCircle"){
-        addLine(`${edgeData.source} ${edgeData.middleLabel} to External Entity`)
-        messageType = "lost message" //Lost message
-      }else if(edgeData.sourceNodeType === "ShadedCircle"){
-        addLine(`External Entity ${edgeData.middleLabel} ${edgeData.target}`)
-        messageType = "found message" //found message
-      }else if(edgeData.targetNodeType === "DestroyMessage"){
-        addLine(`${edgeData.source} Destroys ${edgeData.target}`)
-        messageType = "destroy message"; //destroy message
-      }else if(edgeData.lineStyle === "line"){
-        addLine(`${edgeData.source} ${edgeData.middleLabel} ${edgeData.target}`)
-        messageType = "synchronous"; //synchronous message
+    if (edgeData.endSymbol === "closed arrow") {
+      if (edgeData.middleLabel.includes("<<create>>")) {
+        addLine(`${edgeData.source} creates ${edgeData.target}`);
+        messageType = "create message";
+      } else if (edgeData.targetNodeType === "ShadedCircle") {
+        addLine(`${edgeData.source} ${edgeData.middleLabel} to External Entity`);
+        messageType = "lost message";
+      } else if (edgeData.sourceNodeType === "ShadedCircle") {
+        addLine(`External Entity ${edgeData.middleLabel} ${edgeData.target}`);
+        messageType = "found message";
+      } else if (edgeData.targetNodeType === "DestroyMessage") {
+        addLine(`${edgeData.source} Destroys ${edgeData.target}`);
+        messageType = "destroy message";
+      } else if (edgeData.lineStyle === "line") {
+        addLine(`${edgeData.source} ${edgeData.middleLabel} ${edgeData.target}`);
+        messageType = "synchronous";
       } else {
-        addLine("Unknown message type")
+        addLine("Unknown message type");
       }
-    }else if (edgeData.endSymbol === "open arrow"){
-      if(edgeData.source === edgeData.target){
-        addLine(`${edgeData.source} will ${edgeData.middleLabel}`)
-        messageType = "self message" //self message 
-      }else if(edgeData.lineStyle === "line"){
-        addLine(`${edgeData.source} ${edgeData.middleLabel} ${edgeData.target} //asynchronous`)
-        messageType = "asynchronous" //asynch message
-      }else if(edgeData.lineStyle === "dashLine"){
-        addLine(`${edgeData.source} Replies: ${edgeData.middleLabel} to ${edgeData.target}`)
-        messageType = "reply" //reply message 
-      }else {
-        addLine("Unknown message type")
+    } else if (edgeData.endSymbol === "open arrow") {
+      if (edgeData.source === edgeData.target) {
+        addLine(`${edgeData.source} will ${edgeData.middleLabel}`);
+        messageType = "self message";
+      } else if (edgeData.lineStyle === "line") {
+        addLine(`${edgeData.source} ${edgeData.middleLabel} ${edgeData.target} //asynchronous`);
+        messageType = "asynchronous";
+      } else if (edgeData.lineStyle === "dashLine") {
+        addLine(`${edgeData.source} Replies: ${edgeData.middleLabel} to ${edgeData.target}`);
+        messageType = "reply";
+      } else {
+        addLine("Unknown message type");
       }
     } else {
-      addLine("Unknown message type")
+      addLine("Unknown message type");
     }
   }
 
-  edges.map(edge => {
-    // console.log(edge.loopNodeId)
-    if(edge.data.loopNodeId && !inLoop){
-      // console.log(true)
-      inLoop = true
-      pseudocode += "  Loop (condition) \n"
-      indentLevel++;
-    }else{
-      // console.log(false)
-      inLoop = false;
-      indentLevel--;
+  let activeNodes = [];
+  let currentConditionBranch = null; // Track current branch: "if" or "else"
+  
+  // Sort edges by vertical position
+  const sortedEdges = [...edges].sort((a, b) => a.data.sourceY - b.data.sourceY);
+
+  sortedEdges.forEach(edge => {
+    // Find enclosing nodes for both source and target
+    const sourceEnclosingNodes = nodes.filter(node => 
+      edge.data.sourceX >= node.position.x &&
+      edge.data.sourceX <= node.position.x + node.width &&
+      edge.data.sourceY >= node.position.y &&
+      edge.data.sourceY <= node.position.y + node.height
+    );
+
+    const targetEnclosingNodes = nodes.filter(node => 
+      edge.data.targetX >= node.position.x &&
+      edge.data.targetX <= node.position.x + node.width &&
+      edge.data.targetY >= node.position.y &&
+      edge.data.targetY <= node.position.y + node.height
+    );
+
+    // Combine and sort by Y position (lowest Y first = higher on screen)
+    const allEnclosingNodes = [...new Set([...sourceEnclosingNodes, ...targetEnclosingNodes])];
+    const enclosingNodes = allEnclosingNodes.sort((a, b) => a.position.y - b.position.y);
+
+    // Close nodes that are no longer enclosing
+    while (activeNodes.length > 0) {
+      const lastActiveNode = activeNodes[activeNodes.length - 1];
+      if (!enclosingNodes.includes(lastActiveNode)) {
+        const closingNode = activeNodes.pop();
+        indentLevel = activeNodes.length;
+        
+        if (closingNode.type !== "ActivationBar") {
+          // Reset condition branch when closing a condition node
+          if (closingNode.type === "ConditionNode") {
+            currentConditionBranch = null;
+          }
+          addLine(`End${closingNode.type}`);
+        }
+      } else {
+        break;
+      }
+    }
+
+    // Open new nodes
+    enclosingNodes.forEach(node => {
+      if (!activeNodes.includes(node)) {
+        indentLevel = activeNodes.length;
+        
+        // Skip ActivationBar nodes for structural pseudocode
+        if (node.type === "ActivationBar") {
+          return;
+        }
+        
+        if (node.type === "LoopNode") {
+          const condition = node.data.condition || "condition";
+          addLine(`Loop while ${condition}`);
+        } else if (node.type === "ConditionNode") {
+          // For ConditionNode, detect which branch this edge belongs to using 60/40 split
+          // BUT only when we first enter the condition node
+          const conditionNode = node;
+          const headerHeight = conditionNode.height * 0.1; // First 10% for header
+          const ifAreaHeight = conditionNode.height * 0.5; // Next 50% for if area
+          const elseAreaHeight = conditionNode.height * 0.4; // Remaining 40% for else area
+          
+          const ifAreaStart = conditionNode.position.y + headerHeight;
+          const ifAreaEnd = ifAreaStart + ifAreaHeight;
+          const elseAreaStart = ifAreaEnd;
+          const elseAreaEnd = elseAreaStart + elseAreaHeight;
+          
+          // Check which area the edge falls into
+          if (edge.data.sourceY >= ifAreaStart && edge.data.sourceY <= ifAreaEnd) {
+            // In IF branch (50% of the area after header)
+            const ifCondition = conditionNode.data.ifCondition || "condition";
+            addLine(`If (${ifCondition})`);
+            currentConditionBranch = "if";
+          } else if (edge.data.sourceY >= elseAreaStart && edge.data.sourceY <= elseAreaEnd) {
+            // In ELSE branch (40% of the area)
+            const elseCondition = conditionNode.data.elseCondition || "condition";
+            addLine(`Else (${elseCondition})`);
+            currentConditionBranch = "else";
+          } else {
+            // Default to if if we can't determine
+            const ifCondition = conditionNode.data.ifCondition || "condition";
+            addLine(`If (${ifCondition})`);
+            currentConditionBranch = "if";
+          }
+        } else {
+          const condition = node.data.condition || "condition";
+          addLine(`${node.type} (${condition})`);
+        }
+        
+        activeNodes.push(node);
+      }
+    });
+
+    // Set indent level and add message
+    indentLevel = activeNodes.length;
+    
+    // Check if we're currently inside a ConditionNode and need to switch branches
+    const currentConditionNode = activeNodes.find(node => node.type === "ConditionNode");
+    if (currentConditionNode && currentConditionNode.type === "ConditionNode") {
+      const headerHeight = currentConditionNode.height * 0.1;
+      const ifAreaHeight = currentConditionNode.height * 0.5;
+      const elseAreaHeight = currentConditionNode.height * 0.3;
+      
+      const ifAreaStart = currentConditionNode.position.y + headerHeight;
+      const ifAreaEnd = ifAreaStart + ifAreaHeight;
+      const elseAreaStart = ifAreaEnd;
+      const elseAreaEnd = elseAreaStart + elseAreaHeight;
+      
+      // Determine the correct branch for this specific edge
+      let correctBranch = null;
+      if (edge.data.sourceY >= ifAreaStart && edge.data.sourceY <= ifAreaEnd) {
+        correctBranch = "if";
+      } else if (edge.data.sourceY >= elseAreaStart && edge.data.sourceY <= elseAreaEnd) {
+        correctBranch = "else";
+      }
+      
+      // If we need to switch branches, close the current one and open the new one
+      if (correctBranch && correctBranch !== currentConditionBranch) {
+        // Close the current branch
+        if (currentConditionBranch === "if") {
+          indentLevel--
+          // addLine(`EndIf`);
+         
+        } 
+        // else if (currentConditionBranch === "else") {
+        //   // addLine(`EndElse`);
+        //   // indentLevel --
+        // }
+        
+        // Open the new branch
+        if (correctBranch === "if") {
+          const ifCondition = currentConditionNode.data.ifCondition || "condition";
+          addLine(`Else If (${ifCondition})`);
+        } else if (correctBranch === "else") {
+          const elseCondition = currentConditionNode.data.elseCondition || "condition";
+          addLine(`Else (${elseCondition})`);
+          indentLevel = activeNodes.length;
+        }
+        
+        currentConditionBranch = correctBranch;
+
+      }
     }
     
     message(edge.data);
-
   });
 
-  const endTime = performance.now(); // ADDED
-  const executionTime = (endTime - startTime).toFixed(5); // ADDED
-  console.log(`Algorithm executed in ${executionTime} milliseconds`); // ADDED
+  // Close remaining nodes
+  while (activeNodes.length > 0) {
+    const closingNode = activeNodes.pop();
+    indentLevel = activeNodes.length;
+    
+    if (closingNode.type !== "ActivationBar") {
+      // Reset condition branch when closing a condition node
+      if (closingNode.type === "ConditionNode") {
+        currentConditionBranch = null;
+      
+      }
+      addLine(`End${closingNode.type}`);
+    }
+  }
+
+  const endTime = performance.now();
+  const executionTime = (endTime - startTime).toFixed(5);
+  console.log(`Algorithm executed in ${executionTime} milliseconds`);
 
   return (
     <div className="sequence-pseudocode">
-      <pre>
-        {pseudocode}
-      </pre>
+      <pre>{pseudocode}</pre>
     </div>
   );
 }
+
+// export function SequenceDiagram({ edges, nodes }) {
+//   const startTime = performance.now();
+//   let pseudocode = "";
+//   let indentLevel = 0;
+
+//   function addLine(text) {
+//     if (pseudocode.length > 0) {
+//       pseudocode += "\n";
+//     }
+//     pseudocode += "  ".repeat(indentLevel) + text;
+//   }
+
+//   function message(edgeData) {
+//     let messageType = "";
+
+//     if (edgeData.endSymbol === "closed arrow") {
+//       if (edgeData.middleLabel.includes("<<create>>")) {
+//         addLine(`${edgeData.source} creates ${edgeData.target}`);
+//         messageType = "create message";
+//       } else if (edgeData.targetNodeType === "ShadedCircle") {
+//         addLine(`${edgeData.source} ${edgeData.middleLabel} to External Entity`);
+//         messageType = "lost message";
+//       } else if (edgeData.sourceNodeType === "ShadedCircle") {
+//         addLine(`External Entity ${edgeData.middleLabel} ${edgeData.target}`);
+//         messageType = "found message";
+//       } else if (edgeData.targetNodeType === "DestroyMessage") {
+//         addLine(`${edgeData.source} Destroys ${edgeData.target}`);
+//         messageType = "destroy message";
+//       } else if (edgeData.lineStyle === "line") {
+//         addLine(`${edgeData.source} ${edgeData.middleLabel} ${edgeData.target}`);
+//         messageType = "synchronous";
+//       } else {
+//         addLine("Unknown message type");
+//       }
+//     } else if (edgeData.endSymbol === "open arrow") {
+//       if (edgeData.source === edgeData.target) {
+//         addLine(`${edgeData.source} will ${edgeData.middleLabel}`);
+//         messageType = "self message";
+//       } else if (edgeData.lineStyle === "line") {
+//         addLine(`${edgeData.source} ${edgeData.middleLabel} ${edgeData.target} //asynchronous`);
+//         messageType = "asynchronous";
+//       } else if (edgeData.lineStyle === "dashLine") {
+//         addLine(`${edgeData.source} Replies: ${edgeData.middleLabel} to ${edgeData.target}`);
+//         messageType = "reply";
+//       } else {
+//         addLine("Unknown message type");
+//       }
+//     } else {
+//       addLine("Unknown message type");
+//     }
+//   }
+
+//   let activeNodes = [];
+//   let currentConditionBranch = null; // Track current branch: "if" or "else"
+  
+//   // Sort edges by vertical position
+//   const sortedEdges = [...edges].sort((a, b) => a.data.sourceY - b.data.sourceY);
+
+//   sortedEdges.forEach(edge => {
+//     // Find enclosing nodes for both source and target
+//     const sourceEnclosingNodes = nodes.filter(node => 
+//       edge.data.sourceX >= node.position.x &&
+//       edge.data.sourceX <= node.position.x + node.width &&
+//       edge.data.sourceY >= node.position.y &&
+//       edge.data.sourceY <= node.position.y + node.height
+//     );
+
+//     const targetEnclosingNodes = nodes.filter(node => 
+//       edge.data.targetX >= node.position.x &&
+//       edge.data.targetX <= node.position.x + node.width &&
+//       edge.data.targetY >= node.position.y &&
+//       edge.data.targetY <= node.position.y + node.height
+//     );
+
+//     // Combine and sort by Y position (lowest Y first = higher on screen)
+//     const allEnclosingNodes = [...new Set([...sourceEnclosingNodes, ...targetEnclosingNodes])];
+//     const enclosingNodes = allEnclosingNodes.sort((a, b) => a.position.y - b.position.y);
+
+//     // Close nodes that are no longer enclosing
+//     while (activeNodes.length > 0) {
+//       const lastActiveNode = activeNodes[activeNodes.length - 1];
+//       if (!enclosingNodes.includes(lastActiveNode)) {
+//         const closingNode = activeNodes.pop();
+//         indentLevel = activeNodes.length;
+        
+//         if (closingNode.type !== "ActivationBar") {
+//           // Reset condition branch when closing a condition node
+//           if (closingNode.type === "ConditionNode") {
+//             currentConditionBranch = null;
+//           }
+//           addLine(`End${closingNode.type}`);
+//         }
+//       } else {
+//         break;
+//       }
+//     }
+
+//     // Open new nodes
+//     enclosingNodes.forEach(node => {
+//       if (!activeNodes.includes(node)) {
+//         indentLevel = activeNodes.length;
+        
+//         // Skip ActivationBar nodes for structural pseudocode
+//         if (node.type === "ActivationBar") {
+//           return;
+//         }
+        
+//         if (node.type === "LoopNode") {
+//           const condition = node.data.condition || "condition";
+//           addLine(`Loop while ${condition}`);
+//         } else if (node.type === "ConditionNode") {
+//           // For ConditionNode, detect which branch this edge belongs to using 60/40 split
+//           // BUT only when we first enter the condition node
+//           const conditionNode = node;
+//           const headerHeight = conditionNode.height * 0.1; // First 10% for header
+//           const ifAreaHeight = conditionNode.height * 0.5; // Next 50% for if area
+//           const elseAreaHeight = conditionNode.height * 0.4; // Remaining 40% for else area
+          
+//           const ifAreaStart = conditionNode.position.y + headerHeight;
+//           const ifAreaEnd = ifAreaStart + ifAreaHeight;
+//           const elseAreaStart = ifAreaEnd;
+//           const elseAreaEnd = elseAreaStart + elseAreaHeight;
+          
+//           // Check which area the edge falls into
+//           if (edge.data.sourceY >= ifAreaStart && edge.data.sourceY <= ifAreaEnd) {
+//             // In IF branch (50% of the area after header)
+//             const ifCondition = conditionNode.data.ifCondition || "condition";
+//             addLine(`If (${ifCondition})`);
+//             currentConditionBranch = "if";
+//           } else if (edge.data.sourceY >= elseAreaStart && edge.data.sourceY <= elseAreaEnd) {
+//             // In ELSE branch (40% of the area)
+//             const elseCondition = conditionNode.data.elseCondition || "condition";
+//             addLine(`Else (${elseCondition})`);
+//             currentConditionBranch = "else";
+//           } else {
+//             // Default to if if we can't determine
+//             const ifCondition = conditionNode.data.ifCondition || "condition";
+//             addLine(`If (${ifCondition})`);
+//             currentConditionBranch = "if";
+//           }
+//         } else {
+//           const condition = node.data.condition || "condition";
+//           addLine(`${node.type} (${condition})`);
+//         }
+        
+//         activeNodes.push(node);
+//       }
+//     });
+
+//     // Set indent level and add message
+//     indentLevel = activeNodes.length;
+    
+//     // Check if we're currently inside a ConditionNode and need to switch branches
+//     const currentConditionNode = activeNodes.find(node => node.type === "ConditionNode");
+//     if (currentConditionNode && currentConditionNode.type === "ConditionNode") {
+//       const headerHeight = currentConditionNode.height * 0.1;
+//       const ifAreaHeight = currentConditionNode.height * 0.5;
+//       const elseAreaHeight = currentConditionNode.height * 0.4;
+      
+//       const ifAreaStart = currentConditionNode.position.y + headerHeight;
+//       const ifAreaEnd = ifAreaStart + ifAreaHeight;
+//       const elseAreaStart = ifAreaEnd;
+//       const elseAreaEnd = elseAreaStart + elseAreaHeight;
+      
+//       // Determine the correct branch for this specific edge
+//       let correctBranch = null;
+//       if (edge.data.sourceY >= ifAreaStart && edge.data.sourceY <= ifAreaEnd) {
+//         correctBranch = "if";
+//       } else if (edge.data.sourceY >= elseAreaStart && edge.data.sourceY <= elseAreaEnd) {
+//         correctBranch = "else";
+//       }
+      
+//       // If we need to switch branches, close the current one and open the new one
+//       if (correctBranch && correctBranch !== currentConditionBranch) {
+//         // Store the current indent level before switching
+//         const currentIndent = indentLevel;
+        
+//         // Close the current branch
+//         if (currentConditionBranch === "if") {
+//           addLine(`EndIf`);
+//         } else if (currentConditionBranch === "else") {
+//           addLine(`EndElse`);
+//         }
+        
+//         // Open the new branch with the same indent level
+//         indentLevel = currentIndent; // Reset to maintain same indent
+//         if (correctBranch === "if") {
+//           const ifCondition = currentConditionNode.data.ifCondition || "condition";
+//           addLine(`Else If (${ifCondition})`);
+//         } else if (correctBranch === "else") {
+//           const elseCondition = currentConditionNode.data.elseCondition || "condition";
+//           addLine(`Else (${elseCondition})`);
+//         }
+        
+//         currentConditionBranch = correctBranch;
+//       }
+//     }
+    
+//     message(edge.data);
+//   });
+
+//   // Close remaining nodes
+//   while (activeNodes.length > 0) {
+//     const closingNode = activeNodes.pop();
+//     indentLevel = activeNodes.length;
+    
+//     if (closingNode.type !== "ActivationBar") {
+//       // Reset condition branch when closing a condition node
+//       if (closingNode.type === "ConditionNode") {
+//         currentConditionBranch = null;
+//       }
+//       addLine(`End${closingNode.type}`);
+//     }
+//   }
+
+//   const endTime = performance.now();
+//   const executionTime = (endTime - startTime).toFixed(5);
+//   console.log(`Algorithm executed in ${executionTime} milliseconds`);
+
+//   return (
+//     <div className="sequence-pseudocode">
+//       <pre>{pseudocode}</pre>
+//     </div>
+//   );
+// }
+
 
 export function ClassDiagram({ nodes }) {
   if (!nodes || nodes.length === 0) {
     return "// No classes defined";
   }
-  
+  console.log("Start")
   const startTime = performance.now(); // ADDED
 
   let pseudocode = "";
@@ -361,6 +1187,7 @@ export function ClassDiagram({ nodes }) {
   }
   
   function printAttributes(node){
+    let attributes = ""
     node.data.attributes.forEach(attribute => {
       let accessModifier;
       switch (attribute.access){
@@ -377,8 +1204,10 @@ export function ClassDiagram({ nodes }) {
           accessModifier = "default";
           break;
       }
-      addLine(`${accessModifier} ${attribute.value}`)
+      addLine(attributes += `${accessModifier} ${attribute.value}`)
     })
+    
+    // return attributes;
   }
 
   function printMethods(node){
@@ -405,6 +1234,18 @@ export function ClassDiagram({ nodes }) {
   const getRelationship = (node) => {
     if(!node.targets) return ""
     let relationship = "";
+    let attribute = "";
+
+    // determine relationship multiplicity to attributes
+    function getMultiplicity(className, multiplicity){
+      console.log("Class Name: ", className)
+      console.log("Multiplicity: ", multiplicity)
+      if(multiplicity.trim() === "0..1" || multiplicity.trim() === "1"){
+        attribute += `private ${className?.toLowerCase()}: ${className}\n`
+      }else if(multiplicity.trim() === "0..*" || multiplicity.trim() === "1..*"){
+        attribute += `private ${className?.toLowerCase()}s: List<${className}>\n`
+      }
+    }
 
     node.targets.forEach(target => {
       const targetClass = target.targetClass;
@@ -413,9 +1254,14 @@ export function ClassDiagram({ nodes }) {
       }else if(target.endSymbol === "closed arrow" && target.lineStyle === "dashLine"){
         relationship += `implements ${targetClass} `; //realization
       }else if(target.endSymbol === "open arrow" && target.lineStyle === "line"){ //directed association
-        relationship += `${target.middleLabel} ${targetClass} `; 
+        relationship += `${target.middleLabel} ${targetClass} `;
+        getMultiplicity(target.targetClass, target.startLabel)
       }else if(target.endSymbol === "open arrow" && target.lineStyle === "dashLine"){
         relationship += `depends on ${targetClass} `; //dependency
+        getMultiplicity(target.targetClass, target.startLabel)
+      }else if(target.endSymbol === "none" && target.lineStyle === "line"){
+        relationship += `${target.middleLabel !== " " ? target.middleLabel + " " + targetClass : ""}`;
+        getMultiplicity(target.targetClass, target.startLabel)
       }
     })
 
@@ -423,28 +1269,35 @@ export function ClassDiagram({ nodes }) {
       const sourceClass = source.sourceClass
       if(source.endSymbol === "open diamond"){
         relationship += `has-a ${sourceClass} `; //aggregation 
+        getMultiplicity(source.sourceClass, source.endLabel)
       }else if(source.endSymbol === "filled diamond"){
         relationship += `OWNS ${sourceClass} `; //composition
+        getMultiplicity(source.sourceClass, source.endLabel)
+      }else if(source.endSymbol === "none" && source.lineStyle === "line"){
+        relationship += `${source.middleLabel !== " " ? source.middleLabel + " " + sourceClass : ""}`;
+        getMultiplicity(source.sourceClass, source.endLabel)
       }
+
     })
 
-    return relationship;
+    return [relationship, attribute];
 
   }
 
   nodes.forEach(node => {
     
-    let classRelationships = getRelationship(node);
-
+    let [classRelationships, attribute] = getRelationship(node);
+    // let attributes = getAttributes(node) + attribute;
     addLine(`CLASS ${node.data.className} ${classRelationships}`)
     indentLevel++;
-    
+
     //printing attributes and methods
     printAttributes(node);
+    if(attribute) addLine(attribute);
+    // addLine(attribute); //adding multiple attributes from relationships
     printMethods(node);
 
     indentLevel--;
-
     addLine("");
 
   })
@@ -467,3 +1320,4 @@ export function ClassDiagram({ nodes }) {
   );
 
 }
+
