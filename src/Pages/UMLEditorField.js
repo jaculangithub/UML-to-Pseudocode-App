@@ -1354,20 +1354,20 @@ export default function UMLEditorField() {
       {showPseudocode && structuredData && (
         <div
           style={{
-            position: 'fixed',
-            top: '20%',
-            right: '10px', // ✅ Attach to the right side
-            transform: 'translateY(-50%)', // ✅ Only center vertically
-            width: '400px',
-            maxWidth: '80vh',
-            maxHeight: '400px',
-            overflowY: 'auto',
-            backgroundColor: colorMode === 'dark' ? '#2D3748' : 'white',
-            padding: '15px',
-            borderRadius: '8px',
-            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-            zIndex: 1000,
-            border: colorMode === 'dark' ? '1px solid #4A5568' : '1px solid #E2E8F0'
+             position: 'fixed',
+  top: '70px', // ✅ Always 200px from top — no shifting
+  right: '10px', // ✅ Sticks to the right side
+  // ❌ Remove transform to prevent vertical centering shift
+  width: '400px',
+  maxWidth: '80vh',
+  maxHeight: '400px',
+  overflowY: 'auto',
+  backgroundColor: colorMode === 'dark' ? '#2D3748' : 'white',
+  padding: '15px',
+  borderRadius: '8px',
+  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+  zIndex: 1000,
+  border: colorMode === 'dark' ? '1px solid #4A5568' : '1px solid #E2E8F0'
           }}
 
         >

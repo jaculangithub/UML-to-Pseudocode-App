@@ -278,114 +278,6 @@ export function StateDiagram( {nodes} ){
 
 }
 
-// export function SequenceDiagram({edges, nodes}) {
-
-//   const startTime = performance.now(); // ADDED
-//   let pseudocode = "";
-//   let indentLevel = 0;
-
-//   function addLine(text) {
-//     if (pseudocode.length > 0) {
-//       pseudocode += "\n";
-//     }
-
-//     pseudocode += "  ".repeat(indentLevel) + text;
-//   }
-
-//   function message(edgeData) {
-//     let messageType = ""
-
-//     if(edgeData.endSymbol === "closed arrow"){
-//       if(edgeData.middleLabel.includes("<<create>>")){  
-//         addLine(`${edgeData.source} cresaates ${edgeData.target}`)
-//         messageType = "create message"; // create message
-//       }
-//       else if(edgeData.targetNodeType === "ShadedCircle"){
-//         addLine(`${edgeData.source} ${edgeData.middleLabel} to External Entity`)
-//         messageType = "lost message" //Lost message
-//       }else if(edgeData.sourceNodeType === "ShadedCircle"){
-//         addLine(`External Entity ${edgeData.middleLabel} ${edgeData.target}`)
-//         messageType = "found message" //found message
-//       }else if(edgeData.targetNodeType === "DestroyMessage"){
-//         addLine(`${edgeData.source} Destroys ${edgeData.target}`)
-//         messageType = "destroy message"; //destroy message
-//       }else if(edgeData.lineStyle === "line"){
-//         addLine(`${edgeData.source} ${edgeData.middleLabel} ${edgeData.target}`)
-//         messageType = "synchronous"; //synchronous message
-//       } else {
-//         addLine("Unknown message type")
-//       }
-//     }else if (edgeData.endSymbol === "open arrow"){
-//       if(edgeData.source === edgeData.target){
-//         addLine(`${edgeData.source} will ${edgeData.middleLabel}`)
-//         messageType = "self message" //self message 
-//       }else if(edgeData.lineStyle === "line"){
-//         addLine(`${edgeData.source} ${edgeData.middleLabel} ${edgeData.target} //asynchronous`)
-//         messageType = "asynchronous" //asynch message
-//       }else if(edgeData.lineStyle === "dashLine"){
-//         addLine(`${edgeData.source} Replies: ${edgeData.middleLabel} to ${edgeData.target}`)
-//         messageType = "reply" //reply message 
-//       }else {
-//         addLine("Unknown message type")
-//       }
-//     } else {
-//       addLine("Unknown message type")
-//     }
-//   }
-
-//   let activeNodes = [];
-
-//   edges.forEach(edge => {
-//     // find enclosing nodes for this edge
-//     const enclosingNodes = nodes.filter(node => {
-//       return (
-//         edge.data.sourceX >= node.position.x &&
-//         edge.data.sourceX <= node.position.x + node.width &&
-//         edge.data.sourceY >= node.position.y &&
-//         edge.data.sourceY <= node.position.y + node.height
-//       );
-//     }).sort((a, b) => (a.width * a.height) - (b.width * b.height)); // outer to inner
-
-//     // close nodes that no longer apply
-//     while (
-//       activeNodes.length > 0 &&
-//       !enclosingNodes.includes(activeNodes[activeNodes.length - 1])
-//     ) {
-//       const closingNode = activeNodes.pop();
-//       addLine("  ".repeat(activeNodes.length) + `End${closingNode.type}`);
-//     }
-
-//     // open nodes that are new
-//     enclosingNodes.forEach((node, idx) => {
-//       if (!activeNodes.includes(node)) {
-//         addLine("  ".repeat(idx) + `${node.type} (${node.condition || "Condition"})`);
-//         activeNodes.push(node);
-//       }
-//     });
-
-   
-//     message(edge.data)
-//   });
-
-//   // close leftover nodes at end
-//   while (activeNodes.length > 0) {
-//     const closingNode = activeNodes.pop();
-//     addLine("  ".repeat(activeNodes.length) + `End${closingNode.type}`);
-//   }
-
-
-//   const endTime = performance.now(); // ADDED
-//   const executionTime = (endTime - startTime).toFixed(5); // ADDED
-//   console.log(`Algorithm executed in ${executionTime} milliseconds`); // ADDED
-
-//   return (
-//     <div className="sequence-pseudocode">
-//       <pre>
-//         {pseudocode}
-//       </pre>
-//     </div>
-//   );
-// }
 
 // export function SequenceDiagram({ edges, nodes }) {
 //   const startTime = performance.now();
@@ -1172,6 +1064,8 @@ export function ClassDiagram({ nodes }) {
   if (!nodes || nodes.length === 0) {
     return "// No classes defined";
   }
+
+  console.log("Class Nodes: " +  nodes)
   console.log("Start")
   const startTime = performance.now(); // ADDED
 
@@ -1188,8 +1082,10 @@ export function ClassDiagram({ nodes }) {
   
   function printAttributes(node){
     let attributes = ""
+    let c = 0
     node.data.attributes.forEach(attribute => {
       let accessModifier;
+      c++;
       switch (attribute.access){
         case "+":
           accessModifier = "public";
@@ -1204,7 +1100,7 @@ export function ClassDiagram({ nodes }) {
           accessModifier = "default";
           break;
       }
-      addLine(attributes += `${accessModifier} ${attribute.value}`)
+      addLine(`${accessModifier} ${attribute.value}`)
     })
     
     // return attributes;
