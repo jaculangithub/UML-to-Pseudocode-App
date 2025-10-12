@@ -25,17 +25,15 @@ const ClassNode = ({ selected, data }) => {
   ]);
 
   const updateRow = (setFn, list, index, key, value) => {
-    const trimmedValue = value.trim();
-
-    if (trimmedValue === "") return;
-
     const newList = [...list];
-    newList[index][key] = value;
+    newList[index][key] = value; // Do NOT trim here, allow user to clear it
     setFn(newList);
-
   };
 
+
   const addRow = (setFn, list, newItem) => {
+    // Check ONLY when adding a new row
+    if (!newItem.value.trim()) return; // Prevent pushing empty strings
     setFn([...list, newItem]);
   };
 
@@ -324,7 +322,6 @@ const ClassNode = ({ selected, data }) => {
         />
 
       ))}
-
 
     </div>
   );
