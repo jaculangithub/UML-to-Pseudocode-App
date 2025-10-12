@@ -94,9 +94,9 @@ const DiagramSelection = () => {
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="ms-auto">
-              <Nav.Link href="#features">Features</Nav.Link>
-              {/* <Nav.Link href="#import">Import</Nav.Link> */}
-              <Nav.Link href="#">About</Nav.Link>
+              {/* <Nav.Link href="#features">Features</Nav.Link>
+              <Nav.Link href="#import">Import</Nav.Link>
+              <Nav.Link href="#">About</Nav.Link> */}
             </Nav>
           </Navbar.Collapse>
         </Container>
