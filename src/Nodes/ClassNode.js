@@ -26,7 +26,7 @@ const ClassNode = ({ selected, data }) => {
 
   const updateRow = (setFn, list, index, key, value) => {
     const newList = [...list];
-    newList[index][key] = value; // Do NOT trim here, allow user to clear it
+    newList[index][key] = value; 
     setFn(newList);
   };
 
@@ -36,6 +36,7 @@ const ClassNode = ({ selected, data }) => {
     if (!newItem.value.trim()) return; // Prevent pushing empty strings
     setFn([...list, newItem]);
   };
+
 
   const deleteRow = (setFn, list, index) => {
     if (list.length > 1) {
@@ -164,7 +165,7 @@ const ClassNode = ({ selected, data }) => {
 
             <button
               onClick={() =>
-                addRow(setAttributes, attributes, { access: "+", value: "" })
+                addRow(setAttributes, attributes, { access: "+", value: "attributes: String" })
               }
               style={{ background: "transparent", border: "none", color: "white" }}
               title="Add"
@@ -240,7 +241,7 @@ const ClassNode = ({ selected, data }) => {
             </button>
             <button
               onClick={() =>
-                addRow(setMethods, methods, { access: "+", value: "" })
+                addRow(setMethods, methods, { access: "+", value: "method: void" })
               }
               style={{ background: "transparent", border: "none", color: "white" }}
               title="Add"
