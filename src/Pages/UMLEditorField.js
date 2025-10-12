@@ -89,7 +89,7 @@ const sequenceDiagramGuidelines = (
     3. Make sure the object is highlighted before applying to ensure it attaches correctly. <br />
     4. If nothing happens, reselect the object and try again. <br />
     5. To delete a notation or arrow line, select the element first (either a node or edge), then click the delete button. <br />
-    
+    6. Drag the small dot on the side of the notation to generate a line and connect it to another notation. <br/>
     Tip: The feature will only work if an object is currently active/selected.
   </>
 )
@@ -102,6 +102,7 @@ const activityDiagramGuidelines = (
     2. Deselect the Swimlane or click another notation to enable to select the arrow line. <br/>
     3. The pseudocode will not generate if there is no Start Node present. <br/>
     4. To delete a notation or arrow line, select the element first (either a node or edge), then click the delete button.
+    5. Drag the small dot on the side of the notation to generate a line and connect it to another notation.
   </>
 );
 
@@ -113,6 +114,7 @@ const classDiagramGuidelines = (
     2. Use the proper relationship connectors (e.g., Association, Inheritance) to maintain a correct and organized structure. <br/>
     3. Click the delete icon to remove an attribute or method, and use the plus (+) icon to add a new one. <br/>
     4. To delete a notation or arrow line, select the element first (either a node or edge), then click the delete button. <br/>
+    5. Drag the small dot on the side of the notation to generate a line and connect it to another notation.
   </>
 );
 
@@ -124,6 +126,7 @@ const stateDiagramGuidelines = (
     2. No StartNode will not Display Pseudocode. Same with composite state, not starting with a startnode inside it will not display the substate <br/>
     3. To add transition labels, click the transition line and enter the text in the input field in the beginning of the line. <br/>
     4. To delete a notation or arrow line, select the element first (either a node or edge), then click the delete button. <br/>
+    5. Drag the small dot on the side of the notation to generate a line and connect it to another notation.
   </>
 );
 
@@ -283,153 +286,6 @@ export default function UMLEditorField() {
     // setSelectedNodeId(node.id);
   }, []);
 
-  // const addNode = (nodeType) => {
-
-  //   console.log(nodeType)
-  //   numberOfNodes(n + 1);
-  //   let ID = `${nodeType === "ObjectNode" ? `obj` : "Node"} ${n}`;
-
-  //   const newNode = {
-  //     id: ID,
-  //     type: (nodeType === "VerticalLine" || nodeType === "HorizontalLine") && diagramType === "activity"? "ForkJoinNode": nodeType,
-  //     data: {
-  //       nodes: nodeType === "SwimLane" ? nodes : undefined,
-  //       label: `${nodeType === "EndNode"? "End" : `Node ${n}`}`,
-  //       orientation: nodeType,
-  //       className: "Class",
-  //     },
-  //     position: {
-  //       x: nodeType === "DestroyMessage" || nodeType === "Activationbar"? 0 : 200,
-  //       y: nodeType === "DestroyMessage" || nodeType === "ActivationBar"? 0 : 200,
-  //     },
-  //     style: {
-  //       width: 
-  //           nodeType === "CompositeStateNode" ? 200 :
-  //           nodeType === "ActivationBar" ? 20 : 
-  //           diagramType === "class" ? 300 : 
-  //           nodeType === "LoopNode" || nodeType === "ConditionNode" ? 400 : 
-  //           nodeType === "VerticalLine" ? 20 : 
-  //           nodeType === "HorizontalLine" ? 200 : 
-  //           50,
-  //       height:
-  //           nodeType === "CompositeStateNode" ? 300 :
-  //           nodeType === "ActivationBar" ? 40 : 
-  //           diagramType === "class" ? 200: 
-  //           nodeType === "LoopNode" ||  nodeType === "ConditionNode" ? 500 : 
-  //           nodeType === "VerticalLine" ? 200 : 
-  //           nodeType === "HorizontalLine" ? 20 : 
-  //           50,
-  //       zIndex: nodeType === "SwimLane" || 
-  //               nodeType === "LoopNode" || 
-  //               nodeType === "ConditionNode" || 
-  //               nodeType === "Actor" || 
-  //               nodeType === "ObjectNode" || 
-  //               nodeType === "CompositeStateNode"? -1 : "1000", // Ensure this node is above the first one
-  //     },
-  //     dragHandle: '.drag-handle__label',
-  //     parentId: 
-  //         diagramType === 'activity' ? 'Swimlane1' : 
-  //         nodeType === "ActivationBar" || nodeType === "DestroyMessage" ? lastObjectSelected.id :
-  //         selectedNodeId && (nodes.find(node => node.id === selectedNodeId)?.type === "CompositeStateNode")? selectedNodeId : 
-  //         undefined,
-  //     extent: 
-  //         diagramType === 'activity' || nodeType === "ActivationBar" || nodeType === "DestroyMessage"? 'parent' : 
-  //         selectedNodeId && (nodes.find(node => node.id === selectedNodeId)?.type === "CompositeStateNode")? 'parent' :
-  //         undefined,
-
-  //   };
-  //   if (nodeType === 'SwimLane') {
-  //     setNodes((nds) => [newNode, ...nds]);
-  //   }
-  //   else{
-  //     setNodes((nds) => [...nds, newNode]);
-  //   }
-  // };
-
-
-  // const addNode = (nodeType) => {
-  //   console.log(nodeType);
-  //   numberOfNodes(n + 1);
-  //   let ID = `${nodeType === "ObjectNode" ? `obj` : "Node"} ${n}`;
-
-  //   // ✅ Check if Swimlane1 still exists before assigning parent
-  //   const swimlaneExists = nodes.some(node => node.id === 'Swimlane1');
-  //   const selectedComposite =
-  //     selectedNodeId && nodes.find(node => node.id === selectedNodeId)?.type === "CompositeStateNode"
-  //       ? selectedNodeId
-  //       : null;
-
-  //   const newNode = {
-  //     id: ID,
-  //     type:
-  //       (nodeType === "VerticalLine" || nodeType === "HorizontalLine") && diagramType === "activity"
-  //         ? "ForkJoinNode"
-  //         : nodeType,
-  //     data: {
-  //       nodes: nodeType === "SwimLane" ? nodes : undefined,
-  //       label: `${nodeType === "EndNode" ? "End" : `Node ${n}`}`,
-  //       orientation: nodeType,
-  //       className: "Class",
-  //     },
-  //     position: {
-  //       x: nodeType === "DestroyMessage" || nodeType === "Activationbar" ? 0 : 200,
-  //       y: nodeType === "DestroyMessage" || nodeType === "ActivationBar" ? 0 : 200,
-  //     },
-  //     style: {
-  //       width:
-  //         nodeType === "CompositeStateNode" ? 200 :
-  //         nodeType === "ActivationBar" ? 20 :
-  //         diagramType === "class" ? 300 :
-  //         nodeType === "LoopNode" || nodeType === "ConditionNode" ? 400 :
-  //         nodeType === "VerticalLine" ? 20 :
-  //         nodeType === "HorizontalLine" ? 200 :
-  //         50,
-  //       height:
-  //         nodeType === "CompositeStateNode" ? 300 :
-  //         nodeType === "ActivationBar" ? 40 :
-  //         diagramType === "class" ? 200 :
-  //         nodeType === "LoopNode" || nodeType === "ConditionNode" ? 500 :
-  //         nodeType === "VerticalLine" ? 200 :
-  //         nodeType === "HorizontalLine" ? 20 :
-  //         50,
-  //       zIndex:
-  //         nodeType === "SwimLane" ||
-  //         nodeType === "LoopNode" ||
-  //         nodeType === "ConditionNode" ||
-  //         nodeType === "Actor" ||
-  //         nodeType === "ObjectNode" ||
-  //         nodeType === "CompositeStateNode"
-  //           ? -1
-  //           : "1000",
-  //     },
-  //     dragHandle: ".drag-handle__label",
-
-  //     // ✅ Safe parent assignment
-  //     parentId:
-  //       diagramType === "activity" && swimlaneExists
-  //         ? "Swimlane1"
-  //         : nodeType === "ActivationBar" || nodeType === "DestroyMessage"
-  //         ? lastObjectSelected?.id
-  //         : selectedComposite
-  //         ? selectedComposite
-  //         : undefined,
-
-  //     extent:
-  //       diagramType === "activity" && swimlaneExists
-  //         ? "parent"
-  //         : nodeType === "ActivationBar" || nodeType === "DestroyMessage"
-  //         ? "parent"
-  //         : selectedComposite
-  //         ? "parent"
-  //         : undefined,
-  //   };
-
-  //   if (nodeType === "SwimLane") {
-  //     setNodes((nds) => [newNode, ...nds]);
-  //   } else {
-  //     setNodes((nds) => [...nds, newNode]);
-  //   }
-  // };
 
   const addNode = (nodeType) => {
     console.log(nodeType);
@@ -1355,19 +1211,19 @@ export default function UMLEditorField() {
         <div
           style={{
              position: 'fixed',
-  top: '70px', // ✅ Always 200px from top — no shifting
-  right: '10px', // ✅ Sticks to the right side
-  // ❌ Remove transform to prevent vertical centering shift
-  width: '400px',
-  maxWidth: '80vh',
-  maxHeight: '400px',
-  overflowY: 'auto',
-  backgroundColor: colorMode === 'dark' ? '#2D3748' : 'white',
-  padding: '15px',
-  borderRadius: '8px',
-  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-  zIndex: 1000,
-  border: colorMode === 'dark' ? '1px solid #4A5568' : '1px solid #E2E8F0'
+            top: '70px', // ✅ Always 200px from top — no shifting
+            right: '10px', // ✅ Sticks to the right side
+            // ❌ Remove transform to prevent vertical centering shift
+            width: '400px',
+            maxWidth: '80vh',
+            maxHeight: '400px',
+            overflowY: 'auto',
+            backgroundColor: colorMode === 'dark' ? '#2D3748' : 'white',
+            padding: '15px',
+            borderRadius: '8px',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+            zIndex: 1000,
+            border: colorMode === 'dark' ? '1px solid #4A5568' : '1px solid #E2E8F0'
           }}
 
         >
