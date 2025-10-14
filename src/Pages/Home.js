@@ -91,7 +91,7 @@ const Home = () => {
               <Card style={{ border: "none", borderRadius: "10px", boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)", height: "100%" }}>
                 <Card.Body className="text-center">
                   <p>"This tool saved me hours of work!"</p>
-                  <strong>- John Mathew Alinsunurin</strong>
+                  <strong>- Russel Zamora</strong>
                 </Card.Body>
               </Card>
             </Col>
@@ -99,7 +99,7 @@ const Home = () => {
               <Card style={{ border: "none", borderRadius: "10px", boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)", height: "100%" }}>
                 <Card.Body className="text-center">
                   <p>"A must-have for computing students!"</p>
-                  <strong>- Warly France Jaculan</strong>
+                  <strong>- Kent Tallafer</strong>
                 </Card.Body>
               </Card>
             </Col>
@@ -107,7 +107,7 @@ const Home = () => {
               <Card style={{ border: "none", borderRadius: "10px", boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)", height: "100%" }}>
                 <Card.Body className="text-center">
                   <p>"Super easy to use and very effective."</p>
-                  <strong>- Everlyn Tisado</strong>
+                  <strong>- Russel Ken Tano</strong>
                 </Card.Body>
               </Card>
             </Col>
