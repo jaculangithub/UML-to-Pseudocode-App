@@ -306,7 +306,7 @@ export function SequenceDiagram({ edges, nodes }) {
         addLine(`${edgeData.source} Destroys ${edgeData.target}`);
         messageType = "destroy message";
       } else if (edgeData.lineStyle === "line") {
-        addLine(`${edgeData.source} ${edgeData.middleLabel} ${edgeData.target}`);
+        addLine(`${edgeData.source} ${edgeData.middleLabel} to ${edgeData.target}`);
         messageType = "synchronous";
       } else {
         addLine("Unknown message type");
@@ -316,7 +316,7 @@ export function SequenceDiagram({ edges, nodes }) {
         addLine(`${edgeData.source} will ${edgeData.middleLabel}`);
         messageType = "self message";
       } else if (edgeData.lineStyle === "line") {
-        addLine(`${edgeData.source} ${edgeData.middleLabel} ${edgeData.target} //asynchronous`);
+        addLine(`${edgeData.source} ${edgeData.middleLabel} to ${edgeData.target} //asynchronous`);
         messageType = "asynchronous";
       } else if (edgeData.lineStyle === "dashLine") {
         addLine(`${edgeData.source} Replies: ${edgeData.middleLabel} to ${edgeData.target}`);
