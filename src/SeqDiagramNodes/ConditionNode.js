@@ -11,7 +11,6 @@ const ConditionNode = ({data, selected }) => {
     const [debounceTimer, setDebounceTimer] = useState(null)
 
     useEffect(() => {
-
         data.ifCondition = ifConditition
         data.elseCondition = elseCondition
     })
