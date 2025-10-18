@@ -1,8 +1,8 @@
 import { memo, useEffect, useState } from "react"
 import { NodeResizer } from "@xyflow/react"
-import { data } from "react-router-dom"
+// import { data } from "react-router-dom"
 
-const ConditionNode = ({ selected }) => {
+const ConditionNode = ({data, selected }) => {
 
     const [ifConditition, setIfCondition] = useState("If Condition")
     const [elseCondition, setElseCondition] = useState("Else Condition")
@@ -14,7 +14,6 @@ const ConditionNode = ({ selected }) => {
 
         data.ifCondition = ifConditition
         data.elseCondition = elseCondition
-
     })
 
     const handleLabelChange = (e, condition) => {

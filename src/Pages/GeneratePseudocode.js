@@ -278,6 +278,7 @@ export function StateDiagram( {nodes} ){
 
 
 export function SequenceDiagram({ edges, nodes }) {
+  console.log(nodes)
   const startTime = performance.now();
   let pseudocode = "";
   let indentLevel = 0;
