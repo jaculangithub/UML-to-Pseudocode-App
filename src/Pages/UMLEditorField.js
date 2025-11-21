@@ -143,6 +143,45 @@ export default function UMLEditorField() {
   const [selectedNodeId, setSelectedNodeId] = useState(null);
   const [selectedEdge, setSelectedEdge] = useState(null); //for changing the edge's properties (marker type, etc.)
   const [showPseudocode, setShowPseudocode] = useState(false);
+  const [pseudocodeText, setPseudocodeText] = useState(''); // ADD THIS
+
+  const downloadPseudocode = () => {
+    if (!pseudocodeText.trim()) {
+      alert('No pseudocode generated yet! Please generate pseudocode first.');
+      return;
+    }
+
+    // Ask for filename
+    const fileName = prompt('Enter filename for download (without extension):', `${diagramType}_diagram_pseudocode`);
+    
+    if (fileName === null) {
+      return; // User cancelled
+    }
+
+    const confirmed = window.confirm(`Download ${diagramType} diagram pseudocode as "${fileName}.txt"?`);
+    
+    if (!confirmed) {
+      return;
+    }
+
+    // Create and download the file
+    const blob = new Blob([pseudocodeText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${fileName}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  // ADD THIS FUNCTION TO HANDLE PSEUDOCODE TEXT
+  const handlePseudocodeGenerate = (text) => {
+    setPseudocodeText(text);
+  };
+
+
 
   const activityDiagramNodes = [
     'ActionNode', 
@@ -803,8 +842,7 @@ export default function UMLEditorField() {
   //     setSelectedEdge(null);
   //   }
   // };
-
-
+  
   return (
     <div
       className="react-flow-container"
@@ -899,6 +937,23 @@ export default function UMLEditorField() {
       >
         ← Back
       </button>
+
+        {/* Download Button*/}
+        <button 
+          onClick={downloadPseudocode}
+          style={{
+            padding: '6px 12px',
+            background: colorMode === 'dark' ? '#4A5568' : '#FFF',
+            border: '1px solid #ccc',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}
+        >
+          📥 Download TXT
+        </button>
 
 
         {/* Generate pseudocode */}
@@ -1248,10 +1303,10 @@ export default function UMLEditorField() {
               ×
             </button>
           </div>
-          {diagramType === "activity" && <ActivityDiagram nodes={structuredData} />}
-          {diagramType === 'class' && <ClassDiagram nodes={structuredData}/> }
-          {diagramType === 'sequence' && <SequenceDiagram edges = {structuredData[0]} nodes = {structuredData[1]} />}
-          {diagramType === 'state' && <StateDiagram nodes = {structuredData} />}
+          {diagramType === "activity" && <ActivityDiagram nodes={structuredData} onPseudocodeGenerate={handlePseudocodeGenerate} />}
+          {diagramType === 'class' && <ClassDiagram nodes={structuredData} onPseudocodeGenerate={handlePseudocodeGenerate}/> }
+          {diagramType === 'sequence' && <SequenceDiagram edges = {structuredData[0]} nodes = {structuredData[1]} onPseudocodeGenerate={handlePseudocodeGenerate} />}
+          {diagramType === 'state' && <StateDiagram nodes = {structuredData} onPseudocodeGenerate={handlePseudocodeGenerate}/>}
 
         </div>
       )}

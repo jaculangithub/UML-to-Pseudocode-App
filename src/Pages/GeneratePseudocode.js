@@ -1,5 +1,5 @@
 
-export function ActivityDiagram( {nodes} ){
+export function ActivityDiagram( {nodes, onPseudocodeGenerate} ){
 
   const startTime = performance.now(); // ADDED
   let visited = new Set();
@@ -7,9 +7,6 @@ export function ActivityDiagram( {nodes} ){
   let indentLevel = 0;
   let hasEndNode = false;
   
-  if(!nodes || nodes.length === 0){
-    return "" //empty diagram
-  }
   
   // adding new line
   function addLine(text) {
@@ -132,6 +129,9 @@ export function ActivityDiagram( {nodes} ){
   const executionTime = (endTime - startTime).toFixed(5); // ADDED
   console.log(`Algorithm executed in ${executionTime} milliseconds`); // ADDED
 
+onPseudocodeGenerate && onPseudocodeGenerate(pseudocode);
+
+
   return (
     <pre style={{
       margin: 0,
@@ -144,6 +144,7 @@ export function ActivityDiagram( {nodes} ){
   );
 
 }
+
 
 export function StateDiagram( {nodes} ){
   console.log(nodes)
@@ -276,8 +277,7 @@ export function StateDiagram( {nodes} ){
 
 }
 
-
-export function SequenceDiagram({ edges, nodes }) {
+export function SequenceDiagram({ edges, nodes, onPseudocodeGenerate }) {
   const startTime = performance.now();
   let pseudocode = "";
   let indentLevel = 0;
@@ -495,6 +495,8 @@ export function SequenceDiagram({ edges, nodes }) {
     }
   }
 
+  onPseudocodeGenerate && onPseudocodeGenerate(pseudocode);
+
   const endTime = performance.now();
   const executionTime = (endTime - startTime).toFixed(5);
   console.log(`Algorithm executed in ${executionTime} milliseconds`);
@@ -507,7 +509,7 @@ export function SequenceDiagram({ edges, nodes }) {
 }
 
 
-export function ClassDiagram({ nodes }) {
+export function ClassDiagram({ nodes, onPseudocodeGenerate }) {
   if (!nodes || nodes.length === 0) {
     return "// No classes defined";
   }
@@ -649,6 +651,8 @@ export function ClassDiagram({ nodes }) {
   const endTime = performance.now(); // ADDED
   const executionTime = (endTime - startTime).toFixed(5); // ADDED
   console.log(`Algorithm executed in ${executionTime} milliseconds`); // ADDED
+
+  onPseudocodeGenerate && onPseudocodeGenerate(pseudocode);
 
   return (
     <p style={{ 
