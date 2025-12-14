@@ -8,12 +8,14 @@ import {
   useEdgesState,
   MiniMap,
   addEdge,
+  useReactFlow,
+  ReactFlowProvider
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useParams } from 'react-router-dom';
-import { useNavigate } from "react-router-dom";
-import { set, throttle } from 'lodash'
-import {ActivityDiagram1, ActivityDiagram, SequenceDiagram, StateDiagram, ClassDiagram} from "./GeneratePseudocode";
+import { useNavigate, useLocation } from "react-router-dom";
+import { forEach, set, throttle } from 'lodash'
+import {ActivityDiagram, SequenceDiagram, StateDiagram, ClassDiagram} from "./GeneratePseudocode";
 
 // Action
 import ActionNode from '../Nodes/ActionNode';
@@ -130,9 +132,12 @@ const stateDiagramGuidelines = (
   </>
 );
 
-export default function UMLEditorField() {
+function UMLEditorField() {
   const navigate = useNavigate();
-  const { type: diagramType } = useParams(); // Get the type from URL parameters
+  const location = useLocation();
+
+  const { type: initialDiagramType } = useParams(); // Get the type from URL parameters
+  const [diagramType, setDiagramType] = useState(initialDiagramType);
   // const diagramType = type || "activity"; //activity, class, sequence state
   const [numberOfLane, setNumberOfLane] = useState(2);
   const [structuredData, setStructuredData] = useState(null);
@@ -144,76 +149,6 @@ export default function UMLEditorField() {
   const [selectedEdge, setSelectedEdge] = useState(null); //for changing the edge's properties (marker type, etc.)
   const [showPseudocode, setShowPseudocode] = useState(false);
   const [pseudocodeText, setPseudocodeText] = useState(''); // ADD THIS
-
-  const downloadPseudocode = () => {
-    if (!pseudocodeText.trim()) {
-      alert('No pseudocode generated yet! Please generate pseudocode first.');
-      return;
-    }
-
-    // Ask for filename
-    const fileName = prompt('Enter filename for download (without extension):', `${diagramType}_diagram_pseudocode`);
-    
-    if (fileName === null) {
-      return; // User cancelled
-    }
-
-    const confirmed = window.confirm(`Download ${diagramType} diagram pseudocode as "${fileName}.txt"?`);
-    
-    if (!confirmed) {
-      return;
-    }
-
-    // Create and download the file
-    const blob = new Blob([pseudocodeText], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${fileName}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  // ADD THIS FUNCTION TO HANDLE PSEUDOCODE TEXT
-  const handlePseudocodeGenerate = (text) => {
-    setPseudocodeText(text);
-  };
-
-
-
-  const activityDiagramNodes = [
-    'ActionNode', 
-    'DecisionNode', 
-    // 'StartNode', 
-    'EndNode', 
-    'DestructionNode', 
-    'VerticalLine',
-    `HorizontalLine`,
-
-  ]
-  
-  const classDiagramNodes = [
-    "ClassNode",
-  ]
-
-  const sequenceDiagramNodes = [
-    "Actor",
-    "ActivationBar",
-    "ObjectNode",
-    "LoopNode",
-    "ConditionNode",
-    "ShadedCircle",
-    "DestroyMessage",
-  ]
-
-  const stateDiagramNodes = [
-    "StateNode",
-    "CompositeStateNode",
-    "StartNode",
-    "EndNode",
-  ]
 
   const getInitialNodes = () => {
     if (diagramType === "activity") {
@@ -228,6 +163,7 @@ export default function UMLEditorField() {
           },
           data: {
             numberOfActors: 2,
+            actors: ["actor1", "actor2"],
           },
           dragHandle: '.drag-handle__label'
         },   
@@ -293,7 +229,6 @@ export default function UMLEditorField() {
     return []; // Default empty nodes
   };
 
-
   const initialEdges = [
   ];
 
@@ -301,6 +236,273 @@ export default function UMLEditorField() {
   const [nodes, setNodes, onNodesChange] = useNodesState(getInitialNodes());
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [lastSelected, setLastSelected] = useState(null)
+  const [displayBackground, setDisplayBackground] = useState(false);
+
+  const {setViewport} = useReactFlow();
+
+  // for save and restoring the diagram
+  const [rfInstance, setRfInstance] = useState(null);
+
+  useEffect(() => {
+    if (location.state && location.state.results) {
+      console.log("Restoring from location state:", location.state.results);
+      console.log("Editor Nodes data:", location.state.nodesData);
+      const jsonData = JSON.stringify(location.state.results, null, 2);
+      try {
+        // const text = await file.text();          // Read file content
+        // const flow = JSON.parse(text);           // Parse JSON
+
+        // if (!flow) {
+        //   alert("Invalid file. Cannot restore.");
+        //   return;
+        // }
+        
+        // const flow = location.state.results;
+        
+
+        const flow = JSON.parse(jsonData);
+        console.log("Parsed flow data:", flow);
+        // 3. Extract viewport
+        const { x = 0, y = 0, zoom = 1 } = flow.viewport || {};
+        console.log(flow.diagramType)
+        // 4. Restore diagram
+        console.log("flow nodes", flow.nodes)
+        // for (let i = 0; i < flow.nodes.length; i++){
+        //   console.log("Node data before:", location.state.nodesData[i].data)
+        //   flow.nodes[i].data = location.state.nodesData[i].data
+        // }
+
+        const uploadedEdges = (flow.edges || []).map(edge => {
+          return {
+            ...edge,
+            data: {
+              ...edge.data,
+              onSetLabel: setLabel,
+            }
+          }
+        })
+
+        setNodes(flow.nodes || []);
+        setEdges(uploadedEdges);
+        setViewport({ x, y, zoom });
+        alert("Draft loaded successfully!");
+        console.log("After alert")
+
+      } catch (error) {
+        console.error("Error loading draft:", error);
+        alert("Failed to load the draft. Invalid JSON file.");
+      }
+
+      console.log("Editor Nodes data:", location.state.nodesData);
+    }
+
+  }, [location.state]);
+
+  useEffect(() => {
+    console.log("hello")
+  }, [setNodes, setEdges, setViewport])
+
+
+  const saveDraft = useCallback(() => {
+    if (!rfInstance) return;
+
+    const confirmSave = window.confirm("Do you want to save your diagram as a JSON file?");
+    if (!confirmSave) return;
+
+    let fileName = window.prompt("Enter a file name (without extension):", "flow-data");
+    if (!fileName) {
+      alert("Save cancelled. Filename is required.");
+      return;
+    }
+
+    // Remove illegal characters just to be safe
+    fileName = fileName.replace(/[^a-zA-Z0-9-_]/g, "");
+
+    const flow = rfInstance.toObject();
+
+    const flowWithType = {
+      ...flow,
+      diagramType: diagramType,
+    };
+
+    const jsonData = JSON.stringify(flowWithType, null, 2);
+
+    const blob = new Blob([jsonData], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${fileName}.json`;
+    a.click();
+
+    URL.revokeObjectURL(url);
+  }, [rfInstance]);
+
+  // const uploadDraft = useCallback(() => {
+  //   // 1. Create hidden file input
+  //   const input = document.createElement("input");
+  //   input.type = "file";
+  //   input.accept = ".json";
+
+  //   // 2. When user selects a file
+  //   input.onchange = async (event) => {
+  //     const file = event.target.files[0];
+  //     if (!file) return;
+
+  //     try {
+  //       const text = await file.text();          // Read file content
+  //       const flow = JSON.parse(text);           // Parse JSON
+
+  //       if (!flow) {
+  //         alert("Invalid file. Cannot restore.");
+  //         return;
+  //       }
+  //       setNodes([]);
+  //       setEdges([]);
+        
+  //       // 3. Extract viewport
+  //       const { x = 0, y = 0, zoom = 1 } = flow.viewport || {};
+  //       console.log("helloo")
+  //       // 4. Restore diagram
+  //       setDiagramType(flow.diagramType)
+  //       setNodes(flow.nodes || []);
+  //       setEdges(flow.edges || []);
+  //       setViewport({ x, y, zoom });
+  //       alert("Draft loaded successfully!");
+       
+  //     } catch (error) {
+  //       console.error("Error loading draft:", error);
+  //       alert("Failed to load the draft. Invalid JSON file.");
+  //     }
+  //   };
+
+  //   // 5. Trigger file picker
+  //   input.click();
+
+  // }, [setNodes, setEdges, setViewport]);
+
+  const uploadDraft = useCallback(() => {
+    // 1. Create hidden file input
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json";
+
+    // 2. When user selects a file
+    input.onchange = async (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      try {
+        const text = await file.text();          // Read file content
+        const flow = JSON.parse(text);           // Parse JSON
+
+        if (!flow) {
+          alert("Invalid file. Cannot restore.");
+          return;
+        }
+
+        // 3. FIRST: Clear the diagram
+        setNodes([]);
+        setEdges([]);
+        
+        console.log("Diagram cleared, waiting to load new content...");
+
+        // 4. Use setTimeout to ensure diagram is visibly cleared before loading new data
+        setTimeout(() => {
+          // 5. Extract viewport
+          const { x = 0, y = 0, zoom = 1 } = flow.viewport || {};
+          
+          console.log("Loading new diagram...");
+          
+          // 6. Restore diagram
+          setDiagramType(flow.diagramType || "class");
+          setNodes(flow.nodes || []);
+          setEdges(flow.edges || []);
+          setViewport({ x, y, zoom });
+          
+          alert("Draft loaded successfully!");
+        
+        }, 50); // 50ms delay - enough time for UI to show empty diagram
+
+      } catch (error) {
+      console.error("Error loading draft:", error);
+      alert("Failed to load the draft. Invalid JSON file.");
+    }
+  };
+
+  // 7. Trigger file picker
+  input.click();
+
+}, [setNodes, setEdges, setViewport, setDiagramType]);
+
+
+  const downloadPseudocode = () => {
+    if (!pseudocodeText.trim()) {
+      alert('No pseudocode generated yet! Please generate pseudocode first.');
+      return;
+    }
+
+    // Ask for filename
+    const fileName = prompt('Enter filename for download (without extension):', `${diagramType}_diagram_pseudocode`);
+    
+    if (fileName === null) {
+      return; // User cancelled
+    }
+
+    const confirmed = window.confirm(`Download ${diagramType} diagram pseudocode as "${fileName}.txt"?`);
+    
+    if (!confirmed) {
+      return;
+    }
+
+    // Create and download the file
+    const blob = new Blob([pseudocodeText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${fileName}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  // ADD THIS FUNCTION TO HANDLE PSEUDOCODE TEXT
+  const handlePseudocodeGenerate = (text) => {
+    setPseudocodeText(text);
+  };
+
+  const activityDiagramNodes = [
+    'ActionNode', 
+    'DecisionNode', 
+    'StartNode', 
+    'EndNode', 
+    'DestructionNode', 
+    'VerticalLine',
+    `HorizontalLine`,
+  ]
+  
+  const classDiagramNodes = [
+    "ClassNode",
+  ]
+
+  const sequenceDiagramNodes = [
+    "Actor",
+    "ActivationBar",
+    "ObjectNode",
+    "LoopNode",
+    "ConditionNode",
+    "ShadedCircle",
+    "DestroyMessage",
+  ]
+
+  const stateDiagramNodes = [
+    "StateNode",
+    "CompositeStateNode",
+    "StartNode",
+    "EndNode",
+  ]
+
 
   //array of marker type
   const markerTypes = ["none", "open arrow", "closed arrow", "open diamond", "filled diamond"];
@@ -308,6 +510,7 @@ export default function UMLEditorField() {
     console.log("Nodes ", nodes)
     console.log("Edges ", edges)
   }, [nodes])
+
 
   const throttledOnNodesChange = useMemo(() => {
     const options = { passive: true };
@@ -339,22 +542,22 @@ export default function UMLEditorField() {
         : null;
 
     // If we're in activity diagram mode and Swimlane doesn't exist, create it first
-    if (diagramType === "activity" && !swimlaneExists && nodeType !== "SwimLane") {
-      const swimlaneNode = {
-        id: 'Swimlane1',
-        type: 'SwimLane',
-        position: { x: 0, y: 0 },
-        style: {
-          width: 800,
-          height: 600,
-        },
-        data: {
-          numberOfActors: 2,
-        },
-        dragHandle: '.drag-handle__label'
-      };
-      setNodes((nds) => [swimlaneNode, ...nds]);
-    }
+    // if (diagramType === "activity" && !swimlaneExists && nodeType !== "SwimLane") {
+    //   const swimlaneNode = {
+    //     id: 'Swimlane1',
+    //     type: 'SwimLane',
+    //     position: { x: 0, y: 0 },
+    //     style: {
+    //       width: 800,
+    //       height: 600,
+    //     },
+    //     data: {
+    //       numberOfActors: 2,
+    //     },
+    //     dragHandle: '.drag-handle__label'
+    //   };
+    //   setNodes((nds) => [swimlaneNode, ...nds]);
+    // }
 
     const newNode = {
       id: ID,
@@ -478,7 +681,7 @@ export default function UMLEditorField() {
             startLabel: diagramType === "sequence" || diagramType === "state"? undefined : " ",
             endLabel:  diagramType === "class" ? " " : undefined, 
             middleLabel: diagramType === "activity" ? undefined : " ",
-            startSymbol: 'none',
+            startSymbol: 'none',  
             endSymbol: diagramType === "class"? "none":  'open arrow',
             relationshipType: 'directedAssociation', // Add if needed
             // stepLine: params.source === params.target ? true : false, // Add if needed
@@ -540,10 +743,10 @@ export default function UMLEditorField() {
   }, []);
 
   const getParent = (node, swimLane) => {
-    if(node.type === 'SwimLane') {
+    if(node.type === 'SwimLane' || swimLane) {
       return ""
     }
-
+    console.log("nag error")
     const swimLaneWidth = swimLane.width || 800;
     const nodeX = node.position.x;
     const laneWidth = swimLaneWidth / swimLane.data.numberOfActors;
@@ -712,7 +915,8 @@ export default function UMLEditorField() {
 
     const edgesCopy = edges.map(edge => {
       // Create a clean copy of the edge
-      console.log(edge.source, "source -  targte ", edge.target)
+      console.log(edge.source, "source - targte ", edge.target)
+      console.log("Type:", edge.type, "id: ", edge.id)
       const edgeCopy = {
         ...edge, 
         data: { 
@@ -831,17 +1035,6 @@ export default function UMLEditorField() {
     // console.log("Selected: ", selectedNodeId? selectedNodeId: selectedEdge? selectedEdge: "none")
   }
 
-// new
-  // const onDelete = () => {
-  //   if (selectedNodeId) {
-  //     setNodes((nds) => nds.filter((node) => node.id !== selectedNodeId));
-  //     setSelectedNodeId(null);
-  //   } 
-  //   else if (selectedEdge) {
-  //     setEdges((eds) => eds.filter((edge) => edge.id !== selectedEdge.id));
-  //     setSelectedEdge(null);
-  //   }
-  // };
   
   return (
     <div
@@ -875,12 +1068,16 @@ export default function UMLEditorField() {
           zIndex: 1000,
           style: { stroke: '#000', strokeWidth: 2 },
         }}
-      >
-        <Background
-          variant={BackgroundVariant.Dots}
-          color={colorMode === 'dark' ? '#4a5568' : 'green'}
-          gap={16}
-        />
+        onInit={setRfInstance}
+      > 
+
+        {displayBackground && 
+          <Background
+            variant={BackgroundVariant.Dots}
+            gap={16}
+          />
+        }
+        
         <Controls />
         <MiniMap
           pannable = "true" zoomable="true"
@@ -919,24 +1116,75 @@ export default function UMLEditorField() {
         }}
       > 
         {/* Go back to diagram selection button */}
-      <button
-        onClick={() => navigate("/select-diagram")}
-        style={{
-          position: 'absolute',
-          left: '10px',
-          padding: '6px 12px',
-          background: colorMode === 'dark' ? '#4A5568' : '#FFF',
-          border: '1px solid #ccc',
-          borderRadius: '6px',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-          fontFamily: "'Segoe UI', Arial, sans-serif",
-        }}
-      >
-        ← Back
-      </button>
+        <button
+          onClick={() => navigate("/select-diagram")}
+          style={{
+            position: 'absolute',
+            left: '10px',
+            padding: '6px 12px',
+            background: colorMode === 'dark' ? '#4A5568' : '#FFF',
+            border: '1px solid #ccc',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            fontFamily: "'Segoe UI', Arial, sans-serif",
+          }}
+        >
+          ← Back
+        </button>
+
+         {/* Generate pseudocode */}
+        <button 
+          onClick={() => {
+            restructureData(nodes, edges);
+            setShowPseudocode(true);
+          }}
+          style={{
+            padding: '6px 12px',
+            background: "blue",
+            border: '1px solid #ccc',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            color: "white"
+          }}
+          >
+          Generate
+        </button>
+
+          {/* Save draft */}
+        <button
+          onClick={saveDraft}
+          style={{
+            padding: '6px 12px',
+            background: colorMode === 'dark' ? '#4A5568' : '#FFF',
+            border: '1px solid #ccc',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}
+          >
+          Save 
+        </button>
+
+         <button
+          onClick={uploadDraft}
+          style={{
+            padding: '6px 12px',
+            background: colorMode === 'dark' ? '#4A5568' : '#FFF',
+            border: '1px solid #ccc',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}
+          >
+          Upload 
+        </button>
 
         {/* Download Button*/}
         <button 
@@ -955,27 +1203,10 @@ export default function UMLEditorField() {
           📥 Download TXT
         </button>
 
-
-        {/* Generate pseudocode */}
-        <button 
-          onClick={() => {
-            restructureData(nodes, edges);
-            setShowPseudocode(true);
-          }}
-          style={{
-            padding: '6px 12px',
-            background: colorMode === 'dark' ? '#4A5568' : '#FFF',
-            border: '1px solid #ccc',
-            borderRadius: '6px',
-            cursor: 'pointer'
-          }}
-        >
-          Generate
-        </button>
-
         {/* Line & Dashline Dropdown */}
         <select
           value={selectedEdge?.data?.lineStyle || "line"}
+          disabled = {diagramType === "activity" || diagramType === "state"}
           onChange={(e) => {
             setEdges(eds => eds.map(edge => {
               if (edge.id === selectedEdge?.id) {
@@ -994,12 +1225,13 @@ export default function UMLEditorField() {
             backgroundColor: colorMode === 'dark' ? '#4A5568' : '#FFF',
             border: '1px solid #ccc',
             borderRadius: '6px',
-            cursor: 'pointer'
+            cursor: diagramType === "activity" || diagramType === "state" ? "not-allowed" : "pointer"
           }}
         >
           <option value="line">Line ─</option>
           <option value="dashLine">Dash ┄</option>
         </select>
+        
 
         {/* Marker Selection */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
@@ -1052,6 +1284,7 @@ export default function UMLEditorField() {
           {/* End Symbol Dropdown */}
           <select
             value={selectedEdge?.data?.endSymbol || "none"}
+            disabled = { diagramType === "activity" || diagramType === "state" }
             onChange={(e) => {
               setEdges(eds => eds.map(edge => {
                 if (edge.id === selectedEdge?.id) {
@@ -1067,7 +1300,7 @@ export default function UMLEditorField() {
               backgroundColor: colorMode === 'dark' ? '#4A5568' : '#FFF',
               border: '1px solid #ccc',
               borderRadius: '6px',
-              cursor: 'pointer'
+              cursor: diagramType === "activity" || diagramType === "state" ? "not-allowed" : "pointer"
             }}
           >
             {markerTypes.map((type, index) => (
@@ -1095,6 +1328,22 @@ export default function UMLEditorField() {
             <option value={5}>5 Lane</option>
           </select>
         )}
+
+        <button
+          onClick={() => { setDisplayBackground(!displayBackground)}}
+          style={{
+            padding: '6px 12px',
+            background: '#FFF',
+            border: '1px solid #ccc',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}
+          >
+          Grid
+        </button>
 
         {/* Delete Button (Icon) */}
         <button
@@ -1134,9 +1383,8 @@ export default function UMLEditorField() {
           ❓
         </button>
 
-
         {/* Color Mode Toggle */}
-        <button
+        {/* <button
           onClick={toggleColorMode}
           disabled
           style={{
@@ -1150,7 +1398,7 @@ export default function UMLEditorField() {
           }}
         >
           {colorMode === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode'}
-        </button>
+        </button> */}
 
       </div>
 
@@ -1182,12 +1430,14 @@ export default function UMLEditorField() {
               width: '150px',
             }}
           >
+            {nodeType === 'StartNode' && 'Initial Node'}
             {nodeType === 'ActionNode' && 'Action Node'}
             {nodeType === 'DecisionNode' && 'Decision/Merge Node'}
             {nodeType === 'EndNode' && 'Final State'}
             {nodeType === 'DestructionNode' && 'Destruction Node'}
             {nodeType === 'VerticalLine' && 'ForkJoinNode Vertical'}
             {nodeType === 'HorizontalLine' && 'ForkJoinNode Horizontal'}
+            
 
           
           </button>
@@ -1361,8 +1611,16 @@ export default function UMLEditorField() {
         </div>
       )}
 
-
-
     </div>
   );
 }
+
+
+export default () => {
+  return (
+    <ReactFlowProvider>
+      <UMLEditorField/>
+    </ReactFlowProvider>
+  )  
+}
+ 

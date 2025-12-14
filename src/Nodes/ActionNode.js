@@ -3,8 +3,9 @@ import { Handle, Position, NodeResizer } from "@xyflow/react";
 
 const ActionNode = ({ data, selected }) => {
   const [isHovered, setIsHovered] = useState(false);
-  const [label, setLabel] = useState("Action");
-  const [inputValue, setInputValue] = useState(`Action`);
+  
+  const [label, setLabel] = useState(data.label || "Action");
+  const [inputValue, setInputValue] = useState(data.label || `Action`);
   const [debounceTimer, setDebounceTimer] = useState(null);
 
   useEffect(() => {

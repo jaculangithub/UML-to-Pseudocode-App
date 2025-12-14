@@ -9,8 +9,9 @@ const ClassNode = ({ selected, data }) => {
   const [className, setClassName] = useState(data.className);
   const [isHovered, setIsHovered] = useState(false);  
 
-  const [attributes, setAttributes] = useState([
-    { access: "+", value: "attribute: string" },
+  const [attributes, setAttributes] = useState( data.attributes ||
+    [
+      { access: "+", value: "attribute: string" },
   ]);
 
   //the attributes nad methods will store or copy to data. data.attributes, data.method
@@ -20,8 +21,9 @@ const ClassNode = ({ selected, data }) => {
     data.className = className;
   })
 
-  const [methods, setMethods] = useState([
-    { access: "+", value: "method(): void" },
+  const [methods, setMethods] = useState( data.methods || 
+    [
+      { access: "+", value: "method(): void" },
   ]);
 
   const updateRow = (setFn, list, index, key, value) => {

@@ -30,6 +30,16 @@ const DestroyMessage = ({selected}) =>{
                     left: "30%"
                 }}
             />
+
+            <Handle
+                id = "right"
+                type = "source"
+                position= {Position.Right}
+                style={{
+                    opacity: 0,
+                    right: "30%"
+                }}
+            />
             
             <NodeResizer
                 color="#ff0071"

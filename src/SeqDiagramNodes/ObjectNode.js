@@ -4,8 +4,8 @@ import { useState } from 'react';
 
 const ObjectNode = ({ id, selected, data }) => {
   
-  const [objName, setObjName] = useState(data.objName);
-  const [inputValue, setInputValue] = useState(`Object`);
+  const [objName, setObjName] = useState(data.objectName || "Object1");
+  const [inputValue, setInputValue] = useState(data.objectName || `Object1`);
   const [debounceTimer, setDebounceTimer] = useState(null);
 
 

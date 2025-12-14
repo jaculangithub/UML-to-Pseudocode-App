@@ -146,7 +146,7 @@ onPseudocodeGenerate && onPseudocodeGenerate(pseudocode);
 }
 
 
-export function StateDiagram( {nodes} ){
+export function StateDiagram( {nodes, onPseudocodeGenerate} ){
   console.log(nodes)
   console.log("Start")
   const startTime = performance.now(); // ADDED
@@ -230,7 +230,7 @@ export function StateDiagram( {nodes} ){
         if(strtNode){
           dfs(strtNode);
         }  
-       indentLevel--; 
+        indentLevel--; 
         addLine(`Composite State ${node.data?.label} End`)
         break;
       
@@ -263,6 +263,8 @@ export function StateDiagram( {nodes} ){
   const endTime = performance.now(); // ADDED
   const executionTime = (endTime - startTime).toFixed(5); // ADDED
   console.log(`Algorithm executed in ${executionTime} milliseconds`); // ADDED
+
+  onPseudocodeGenerate && onPseudocodeGenerate(pseudocode);
 
   return (
     <pre style={{
@@ -588,9 +590,9 @@ export function ClassDiagram({ nodes, onPseudocodeGenerate }) {
     function getMultiplicity(className, multiplicity){
       console.log("Class Name: ", className)
       console.log("Multiplicity: ", multiplicity)
-      if(multiplicity.trim() === "0..1" || multiplicity.trim() === "1"){
+      if( multiplicity && (multiplicity.trim() === "0..1" || multiplicity.trim() === "1")){
         attribute += `private ${className?.toLowerCase()}: ${className}\n`
-      }else if(multiplicity.trim() === "0..*" || multiplicity.trim() === "1..*"){
+      }else if( multiplicity && (multiplicity.trim() === "0..*" || multiplicity.trim() === "1..*")){
         attribute += `private ${className?.toLowerCase()}s: List<${className}>\n`
       }
     }

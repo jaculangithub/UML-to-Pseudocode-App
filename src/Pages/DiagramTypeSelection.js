@@ -127,9 +127,10 @@ const DiagramOptions = () => {
     
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const files = Array.from(e.dataTransfer.files).filter(file => 
-        file.type === "image/png" || 
-        file.name.endsWith(".xmi") || 
-        file.name.endsWith(".xml")
+        file.type === "image/png" 
+        // || 
+        // file.name.endsWith(".xmi") || 
+        // file.name.endsWith(".xml")
       );
       setUploadedFiles(files);
     }
@@ -149,35 +150,6 @@ const DiagramOptions = () => {
   const removeFile = (index) => {
     setUploadedFiles(prev => prev.filter((_, i) => i !== index));
   };
-
-  // const sendFilesToBackend = async () => {
-  //   if (uploadedFiles.length === 0) {
-  //     console.log("No files to upload");
-  //     return;
-  //   }
-
-  //   const formData = new FormData();
-  //   uploadedFiles.forEach((file) => {
-  //     formData.append("files", file);
-  //   });
-
-  //   // Add the diagram type to the form data
-  //   formData.append("diagramType", diagramType);
-
-  //   try {
-  //     const res = await fetch("http://localhost:5000/upload", {
-  //       method: "POST",
-  //       body: formData,
-  //     });
-
-  //     const data = await res.json();
-  //     console.log("Response from Python backend:", data);
-  //     // You can navigate to another page after successful upload if needed
-  //   } catch (err) {
-  //     console.error("Error uploading files:", err);
-  //   }
-  // };
-
 
   const sendFilesToBackend = async () => {
     if (uploadedFiles.length === 0) {
@@ -201,10 +173,43 @@ const DiagramOptions = () => {
 
       const data = await res.json();
       console.log("Response from Python backend:", data);
-      
       // Handle the response - you can navigate to results page or show success message
-      if (data.processed_files && data.processed_files.length > 0) {
+
+      const hasError = data.processed_files[0].error
+      
+      if(hasError){
+        alert("Error uploading files. Please check diagram and try again.")
+      }
+
+      if (data.processed_files && data.processed_files.length > 0 && !hasError) {
         alert(`Successfully processed ${data.processed_files.length} file(s) for ${data.diagram_type_received} diagram`);
+        
+        const noErrors = data.processed_files.every(file => !file.error);
+        if (noErrors) {
+          console.log("Processed files", data.processed_files)
+          let diagram_type = data.processed_files[0].diagram_type
+          console.log("Diagram type from backend:", diagram_type)
+          console.log("Structured data:", data.processed_files[0].processed_data)
+          const nodesData = data.processed_files[0].processed_data.nodes;
+          console.log("Nodes data:", nodesData);
+          
+          // add drag handle for the all the nodes
+          for (let i = 0; i < nodesData.length; i++) {
+            nodesData[i]["dragHandle"] = ".drag-handle__label"
+            nodesData[i]["selectable"] = true
+          }
+
+          navigate(`/editor/${diagram_type}`, { 
+            state: { 
+              results: data.processed_files[0].processed_data, 
+              nodesData: nodesData} 
+            });
+          // console.log("Before navigation - raw data:", data);
+          // console.log("Before navigation - actors:", data.processed_files[0].processed_data.nodes[0].data);
+          // console.log("Before navigation - actors type:", data.processed_files[0].processed_data.nodes[0].data.actors);
+          // console.log("Before navigation - actors stringified:", JSON.stringify(data.processed_files[0].processed_data.nodes[0].data.actors));
+          console.log("Navigated to editor with results");
+        }
       }
       
     } catch (err) {

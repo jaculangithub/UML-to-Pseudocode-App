@@ -3,7 +3,7 @@ import { NodeResizer } from "@xyflow/react";
 
 const Swimlane = ({ selected, data }) => {
   const [numberOfActors, setNumberOfActors] = useState(data.numberOfActors);
-  const [listOfActors, setListOfActors] = useState([]); // final debounced values
+  const [listOfActors, setListOfActors] = useState(data.actors || []); // final debounced values
   const debounceTimers = useRef([]); // store timers per input
 
   useEffect(() => {
